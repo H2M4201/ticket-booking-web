@@ -36,6 +36,8 @@ INSERT INTO Users (userName, password, firstName, lastName, email, phoneNumber, 
                     ('fifa', 'pbkdf2:sha256:150000$G365080U$4a8509d6142e2b6374c75593bfbaf2db5a05cbed41bc3265f1a8e9b9a4fcdc37',
                         'FIFA', '', 'fifa@gmail.com', '', '', '2024-06-13', FALSE, TRUE, FALSE);
 
+
+
 DROP TABLE IF EXISTS Listings;
 
 CREATE TABLE Listings (

@@ -147,162 +147,44 @@ def set_user_profile(user_id):
 
     return jsonify({'success': True, 'message': 'User registered successfully'}), 201
 
-# @app.route('/user/<int:user_id>/active-listings', methods=['GET'])
-# def get_active_listings(user_id):
-#     # print(f"get_active_listings called with user_id: {user_id}")
-#     db_conn = db.connect_to_database()
-
-#     # First, check if the user is an admin
-#     admin_check_query = "SELECT isAdmin FROM Users WHERE userID = %s"
-#     is_admin = db.execute_query(db_connection=db_conn, query=admin_check_query, query_params=(user_id,)).fetchone()
-
-#     # Decide the query based on the admin status
-#     if is_admin and is_admin['isAdmin']:
-#         listings_query = """
-#         SELECT 
-#             Listings.*, 
-#             Photos.photoPath,
-#             Bids.bidAmt
-#         FROM 
-#             Listings 
-#         LEFT JOIN 
-#             Photos ON Listings.listingID = Photos.listingID
-#         LEFT JOIN 
-#             Bids ON Listings.bidID = Bids.bidID
-#         WHERE 
-#             Listings.status = 'active';
-#         """
-#         query_params = ()
-#     else:
-#         listings_query = """
-#         SELECT 
-#             Listings.*, 
-#             Photos.photoPath,
-#             Bids.bidAmt
-#         FROM 
-#             Listings 
-#         LEFT JOIN 
-#             Photos ON Listings.listingID = Photos.listingID
-#         LEFT JOIN 
-#             Bids ON Listings.bidID = Bids.bidID
-#         WHERE 
-#             Listings.userID = %s AND Listings.status = 'active';
-#         """
-#         query_params = (user_id,)
-
-#     listings = db.execute_query(db_connection=db_conn, query=listings_query, query_params=query_params).fetchall()
-
-#     processed_listings = []
-#     for listing in listings:
-#         processed_listing = {}
-#         for key, value in listing.items():
-#             if isinstance(value, Decimal):
-#                 processed_listing[key] = str(value)
-#             elif isinstance(value, datetime):
-#                 processed_listing[key] = value.strftime('%Y-%m-%d %H:%M')
-#             else:
-#                 processed_listing[key] = value
-#         processed_listings.append(processed_listing)
-
-#     return jsonify({'success': True, 'data': processed_listings})
 
 
-# @app.route('/user/<int:user_id>/active-users', methods=['GET'])
-# def get_active_users(user_id):
-#     print(f"get_active_users called with user_id: {user_id}")
-#     db_conn = db.connect_to_database()
+@app.route('/user/<int:user_id>/ChangePassword', methods=['POST'])
+def change_password (user_id):
+    # get data from FE
+    data = request.json
+    username = data['username']
+    pwd = data['password']
+    new_pwd = data['new_pwd']
+    confirm_pwd = data['confirm_pwd']
 
-#     # First, check if the user is an admin
-#     admin_check_query = "SELECT isAdmin FROM Users WHERE userID = %s"
-#     is_admin = db.execute_query(db_connection=db_conn, query=admin_check_query, query_params=(user_id,)).fetchone()
+    # query to db looking for user info
+    db_conn = db.connect_to_database()
+    error = None
+    user = db.execute_query(
+        db_conn,
+        'SELECT * FROM Users WHERE userName = %s', (username,)
+    ).fetchone()
 
-#     # If the current user is not an admin, return an error response
-#     if is_admin['isAdmin']:
-#         users_query = """
-#         SELECT 
-#             userID, userName, firstName, lastName, email, dateJoined, rating, isActive
-#         FROM 
-#             Users
-#         WHERE 
-#             isAdmin = FALSE AND isActive = TRUE;
-#         """
+    # check condition
+    if not username or not pwd or not new_pwd or not confirm_pwd:
+        error = 'Old Password and New password are required.'
+    elif not check_password_hash(user['password'], pwd):
+        error = 'Old Password not correct.'
+    elif new_pwd != confirm_pwd:
+        error = 'New Passwords do not match.'
 
-#         users = db.execute_query(db_connection=db_conn, query=users_query).fetchall()
-#         #return jsonify({'success': False, 'message': 'Access denied'}), 403
-#     else:
-#     # If the current user is an admin, fetch all active non-admin users
-#         users_query = """
-#         SELECT 
-#             userID, userName, firstName, lastName, email, dateJoined, rating, isActive
-#         FROM 
-#             Users
-#         WHERE 
-#             userID = %s;
-#         """
-
-#         users = db.execute_query(db_connection=db_conn, query=users_query, query_params=user_id).fetchall()
-
-#     processed_users = []
-#     for user in users:
-#         processed_user = {}
-#         for key, value in user.items():
-#             if isinstance(value, Decimal):
-#                 processed_user[key] = str(value)
-#             elif isinstance(value, datetime):
-#                 processed_user[key] = value.strftime('%Y-%m-%d %H:%M')
-#             else:
-#                 processed_user[key] = value
-#         processed_users.append(processed_user)
-
-#     return jsonify({'success': True, 'data': processed_users})
-
-# @app.route('/suspend-user', methods=['POST'])
-# def suspend_user():
-#     db_conn = db.connect_to_database()
-#     user_id = request.json['user_id']
+    if error:
+        return jsonify({'success': False, 'error': error}), 400
     
-#     # Check if the user exists
-#     user_check_query = "SELECT * FROM Users WHERE userID = %s"
-#     user = db.execute_query(db_connection=db_conn, query=user_check_query, query_params=(user_id,)).fetchone()
-#     if not user:
-#         return jsonify({'success': False, 'error': 'User not found'}), 404
-
-#     # Update the isActive field for the user to False (inactive)
-#     suspend_query = "UPDATE Users SET isActive = FALSE WHERE userID = %s"
-#     db.execute_query(db_connection=db_conn, query=suspend_query, query_params=(user_id,))
     
-#     return jsonify({'success': True, 'message': f'User {user_id} suspended successfully'}), 200
+    hashed_password = generate_password_hash(new_pwd, method='pbkdf2:sha256')
+    db.execute_query(
+        db_conn,
+        'UPDATE Users SET password = %s', (hashed_password)
+    )
 
-
-# @app.route('/user/<int:user_id>/bid-history', methods=['GET'])
-# def get_bid_history(user_id):
-#     db_conn = db.connect_to_database()
-#     bid_history_query = """
-#     SELECT 
-#         Bids.*, 
-#         Listings.name 
-#     FROM 
-#         Bids 
-#     JOIN 
-#         Listings ON Bids.listingID = Listings.listingID
-#     WHERE 
-#         Bids.userID = %s;
-#     """
-#     bid_history = db.execute_query(db_connection=db_conn, query=bid_history_query, query_params=(user_id,)).fetchall()
-
-#     processed_listings = []
-#     for listing in bid_history:
-#         processed_listing = {}
-#         for key, value in listing.items():
-#             if isinstance(value, Decimal):
-#                 processed_listing[key] = str(value)
-#             elif isinstance(value, datetime):
-#                 processed_listing[key] = value.strftime('%Y-%m-%d %H:%M')
-#             else:
-#                 processed_listing[key] = value
-#         processed_listings.append(processed_listing)
-
-#     return jsonify({'success': True, 'data': processed_listings})
+    return jsonify({'success': True, 'message': 'Password changed successfully'}), 200
 
 
 

@@ -6,6 +6,7 @@ import 'bootstrap/dist/js/bootstrap.bundle.min';
 import Listings from './components/Home';
 import Register from './components/Register';
 import Login from "./components/Login";
+import ChangePassword from './components/ChangePassword';
 import Navbar from './components/Navbar';
 import Profile from "./components/Profile";
 import SubmitListingForm from './components/SubmitListing';
@@ -30,6 +31,7 @@ function App() {
         <Route path="/" element={<Listings />} />
         <Route path="/login" element={<Login onLogin={handleLogin} />} />
         <Route path="/register" element={<Register />} />
+        <Route path='ChangePassword' element={ChangePassword}/>
         <Route path="/profile" element={<Profile user={user} />} />
         <Route path="/submit-listing" element={<SubmitListingForm/>} />
         {/* other routes */}

@@ -5,32 +5,31 @@ import config from "../config";
 
 
 function Profile({ user }) {
-  console.log(user)
   const [userInfo, setUserInfo] = useState([]);
   const [formData, setFormData] = useState({
     fname: '',
     lname: '',
     email: '',
-    phone: '',
     username: '',
+    phone: '',
     type: '',
   });
   const navigate = useNavigate();
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
 
     try {
         const response = await axios.post(`${config.userServiceUrl}/profile`, {
-            username: formData.username,
-            phone: formData.phone,
-            fname: formData.fname,
-            lname: formData.lname,
-            email: formData.email,
-            type: formData.type
+            username: userInfo.username,
+            phone: userInfo.phone,
+            fname: userInfo.fname,
+            lname: userInfo.lname,
+            email: userInfo.email,
+            type: userInfo.type
         });
 
         if (response.data.success) {
@@ -117,7 +116,7 @@ function Profile({ user }) {
 
           <div className='row my-4'>
             <div className="col-4">
-              <button classname="submit_btn" type="submit" className="btn btn-danger">Update Profile</button>
+              <button className="btn btn-danger" type="submit">Update Profile</button>
               <button className="btn btn-secondary" onClick={() => navigate('/ChangePassword')}>Change Password</button>
             </div>
           </div>

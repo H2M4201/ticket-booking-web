@@ -37,6 +37,7 @@ function CustomNavbar({ isLoggedIn, user, onLogout }) {
                 <LinkContainer to="/profile">
                   <NavDropdown.Item>Profile</NavDropdown.Item>
                 </LinkContainer>
+                <NavDropdown.Item onClick={handleLogout}>View Tickets</NavDropdown.Item>
                 <NavDropdown.Divider />
             <NavDropdown.Item onClick={handleLogout}>Logout</NavDropdown.Item>
               </NavDropdown>

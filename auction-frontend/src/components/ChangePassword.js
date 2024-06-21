@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import config from "../config";
 
-function ChangePassword ({onChangePwd}) {
+function ChangePassword ({onChangePwd, user}) {
 
     const [formData, setFormData] = useState({
         username: '',
@@ -11,6 +11,7 @@ function ChangePassword ({onChangePwd}) {
         new_pwd: '',
         confirm_pwd: ''
     });
+    const [userInfo, setUserInfo] = useState([]);
     const navigate = useNavigate();
 
     const handleChange = (e) => {
@@ -21,7 +22,7 @@ function ChangePassword ({onChangePwd}) {
         e.preventDefault();
 
         try {
-            const response = await axios.post(`${config.userServiceUrl}/ChangePassword`, {
+            const response = await axios.post(`${config.userServiceUrl}/user/${user.id}/ChangePassword`, {
                 username: formData.username,
                 pwd: formData.pwd,
                 new_pwd: formData.new_pwd,
@@ -34,7 +35,7 @@ function ChangePassword ({onChangePwd}) {
 
                 try {
                     const response_log = await axios.post(`${config.logServiceUrl}/log`, {
-                        msg: formData.username += ' login successfully.'
+                        msg: formData.username += ' password changed successfully.'
                     });
                     if (response_log.status === 200) {
                         console.log('Login information saved successfully:', response_log.data);
@@ -56,18 +57,30 @@ function ChangePassword ({onChangePwd}) {
         }
     };
 
+    useEffect(() => {
+        if (!user || !user.id) return;
+        axios
+          .post(`${config.userServiceUrl}/user/${user.id}/ChangePassword`)
+          .then((response) => {
+            if (response.data.success) {
+              setUserInfo(response.data.data);
+            }
+          })
+          .catch((error) => console.log(error));
+      }, [user]);
+    
+      if (!userInfo) {
+        return <div>Loading...</div>;
+      } else {
+        console.log(userInfo);
+      }
+
 
 
     return (
         <>
             <div className='container pt-5'>
                 <form onSubmit={handleSubmit}>
-                    <div className='row mt-5'>
-                        <div className="col-4">
-                            <label htmlFor='username' className="form-label">Username</label>
-                            <input type='text' className="form-control" name='username' value={formData.username} disabled/>
-                        </div>
-                    </div>
                     <div className='row mt-4'>
                         <div className="col-4">
                             <label htmlFor='pwd' className="form-label">Old Password</label>

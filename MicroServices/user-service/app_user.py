@@ -14,7 +14,8 @@ UPLOAD_FOLDER = 'static/img/'
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config.from_mapping(SECRET_KEY='dev')
-CORS(app)  # Enable CORS
+CORS(app)
+  # Enable CORS
 
 
 # backend logic to 
@@ -118,7 +119,6 @@ def get_user_profile(user_id):
         else:
             processed_listing[key] = value
 
-    print(processed_listing)
     if not user:
         return jsonify({'success': False, 'error': 'User not found'}), 404
 
@@ -134,6 +134,7 @@ def set_user_profile(user_id):
     lname = data['lname']
     email = data['email']
     phone = data['phone']
+    print(data, username, fname, lname, email, phone)
 
     # connect to db
     db_conn = db.connect_to_database()
@@ -145,7 +146,7 @@ def set_user_profile(user_id):
         (fname, lname, phone)
     )
 
-    return jsonify({'success': True, 'message': 'User registered successfully'}), 201
+    return jsonify({'success': True, 'message': 'User profile updated'}), 201
 
 
 
@@ -153,21 +154,25 @@ def set_user_profile(user_id):
 def change_password (user_id):
     # get data from FE
     data = request.json
-    username = data['username']
+
+    if data is None:
+        return jsonify({'error': 'Invalid JSON'}), 400
     pwd = data['password']
     new_pwd = data['new_pwd']
     confirm_pwd = data['confirm_pwd']
+    print(data)
 
     # query to db looking for user info
     db_conn = db.connect_to_database()
     error = None
     user = db.execute_query(
         db_conn,
-        'SELECT * FROM Users WHERE userName = %s', (username,)
+        'SELECT * FROM Users WHERE userID = %s', (user_id,)
     ).fetchone()
 
+
     # check condition
-    if not username or not pwd or not new_pwd or not confirm_pwd:
+    if not pwd or not new_pwd or not confirm_pwd:
         error = 'Old Password and New password are required.'
     elif not check_password_hash(user['password'], pwd):
         error = 'Old Password not correct.'

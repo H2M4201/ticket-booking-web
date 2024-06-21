@@ -1,10 +1,33 @@
-import React from 'react';
+import React,  { useState, useEffect } from 'react';
 import { Navbar, Nav, NavDropdown, Container } from 'react-bootstrap';
 import { LinkContainer } from 'react-router-bootstrap';
 import {useNavigate} from "react-router-dom";
+import axios from "axios";
+import config from "../config";
 
 function CustomNavbar({ isLoggedIn, user, onLogout }) {
+  const [userInfo, setUserInfo] = useState([]);
   const navigate = useNavigate();
+
+
+  useEffect(() => {
+    if (!user || !user.id) return;
+    axios
+      .get(`${config.userServiceUrl}/user/${user.id}/profile`)
+      .then((response) => {
+        if (response.data.success) {
+          setUserInfo(response.data.data);
+        }
+      })
+      .catch((error) => console.log(error));
+  }, [user]);
+
+  if (!userInfo) {
+    return <div>Loading...</div>;
+  } else {
+    console.log(userInfo);
+  }
+  
 
   const handleLogout = () => {
     onLogout();
@@ -27,9 +50,9 @@ function CustomNavbar({ isLoggedIn, user, onLogout }) {
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="ms-auto">
             <LinkContainer to="/">
-              <Nav.Link>Auctions</Nav.Link>
+              <Nav.Link>Home</Nav.Link>
             </LinkContainer>
-            <LinkContainer to="/submit-listing">
+            <LinkContainer to="/submit-event">
               <Nav.Link>Discounts</Nav.Link>
             </LinkContainer>
             {isLoggedIn ? (
@@ -37,7 +60,19 @@ function CustomNavbar({ isLoggedIn, user, onLogout }) {
                 <LinkContainer to="/profile">
                   <NavDropdown.Item>Profile</NavDropdown.Item>
                 </LinkContainer>
-                <NavDropdown.Item onClick={handleLogout}>View Tickets</NavDropdown.Item>
+                {userInfo.isGuest ? ( 
+                  <>
+                    <LinkContainer to="/profile">
+                      <NavDropdown.Item>Buy Ticket</NavDropdown.Item>
+                    </LinkContainer>
+                  </>
+                  ) : (
+                  <>
+                    <LinkContainer to="/profile">
+                      <NavDropdown.Item>Add Event</NavDropdown.Item>
+                    </LinkContainer>
+                  </>
+                )}
                 <NavDropdown.Divider />
             <NavDropdown.Item onClick={handleLogout}>Logout</NavDropdown.Item>
               </NavDropdown>

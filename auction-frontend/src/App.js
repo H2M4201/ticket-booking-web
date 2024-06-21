@@ -11,6 +11,7 @@ import Navbar from './components/Navbar';
 import Profile from "./components/Profile";
 import SubmitListingForm from './components/SubmitListing';
 import useLocalStorage from './hooks/useLocalStorage';
+import SubmitEventForm from './components/SubmitEvent';
 
 function App() {
   const [user, setUser] = useLocalStorage("user",null);
@@ -31,9 +32,10 @@ function App() {
         <Route path="/" element={<Listings />} />
         <Route path="/login" element={<Login onLogin={handleLogin} />} />
         <Route path="/register" element={<Register />} />
-        <Route path='ChangePassword' element={ChangePassword}/>
+        <Route path='ChangePassword' element={<ChangePassword/>}/>
         <Route path="/profile" element={<Profile user={user} />} />
         <Route path="/submit-listing" element={<SubmitListingForm/>} />
+        <Route path="/submit-event" element={<SubmitEventForm user={user}/>}/>
         {/* other routes */}
       </Routes>
     </Router>

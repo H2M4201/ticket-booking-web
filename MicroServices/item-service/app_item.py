@@ -15,6 +15,7 @@ from utils.utils import send_notification, send_alert, write_log
 
 # Set up upload folder
 UPLOAD_FOLDER = 'static/img/'
+
 # Initialize Flask app
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER

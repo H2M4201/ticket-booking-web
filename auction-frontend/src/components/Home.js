@@ -125,6 +125,7 @@ function Listings() {
         console.error("Error flag", error);
       });
   };
+  
   useEffect(() => {
     // Fetch all listings
     axios

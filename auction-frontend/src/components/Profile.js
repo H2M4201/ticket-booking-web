@@ -23,13 +23,12 @@ function Profile({ user }) {
   const handleSubmit = async (e) => {
 
     try {
-        const response = await axios.post(`${config.userServiceUrl}/profile`, {
-            username: userInfo.username,
+        const response = await axios.post(`${config.userServiceUrl}/user/${user.id}/profile`, {
+            username: userInfo.userName,
             phone: userInfo.phone,
             fname: userInfo.fname,
             lname: userInfo.lname,
             email: userInfo.email,
-            type: userInfo.type
         });
 
         if (response.data.success) {
@@ -85,7 +84,7 @@ function Profile({ user }) {
             </div>
             <div className="col-4">
               <label htmlFor='username' className="form-label">Username</label>
-              <input type="text" className="form-control" name='username' value={userInfo.username} disabled/>
+              <input type="text" className="form-control" name='username' value={userInfo.userName} disabled/>
             </div>
           </div>
 

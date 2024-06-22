@@ -33,7 +33,7 @@ function App() {
         <Route path="/" element={<Listings />} />
         <Route path="/login" element={<Login onLogin={handleLogin} />} />
         <Route path="/register" element={<Register />} />
-        <Route path="ChangePassword" element={<ChangePassword />} />
+        <Route path="ChangePassword" element={<ChangePassword user={user} />} />
         <Route path="/profile" element={<Profile user={user} />} />
         <Route path="/submit-listing" element={<SubmitListingForm />} />
         <Route path="/submit-event" element={<SubmitEventForm user={user} />} />

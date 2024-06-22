@@ -148,7 +148,7 @@ def set_user_profile(user_id):
 @app.route('/user/<int:user_id>/ChangePassword', methods=['POST'])
 def change_password(user_id):
     data = request.json
-    pwd = data.get('password')
+    pwd = data.get('pwd')
     new_pwd = data.get('new_pwd')
     confirm_pwd = data.get('confirm_pwd')
 
@@ -158,7 +158,7 @@ def change_password(user_id):
     ).fetchone()
 
     error = None
-    if not pwd or not new_pwd or not confirm_pwd:
+    if (not pwd) or (not new_pwd) or (not confirm_pwd):
         error = 'Old Password and New password are required.'
     elif not user or not check_password_hash(user['password'], pwd):
         error = 'Old Password not correct.'

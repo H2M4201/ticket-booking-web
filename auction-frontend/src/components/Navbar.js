@@ -1,14 +1,13 @@
-import React,  { useState, useEffect } from 'react';
-import { Navbar, Nav, NavDropdown, Container } from 'react-bootstrap';
-import { LinkContainer } from 'react-router-bootstrap';
-import {useNavigate} from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Navbar, Nav, NavDropdown, Container } from "react-bootstrap";
+import { LinkContainer } from "react-router-bootstrap";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import config from "../config";
 
 function CustomNavbar({ isLoggedIn, user, onLogout }) {
   const [userInfo, setUserInfo] = useState([]);
   const navigate = useNavigate();
-
 
   useEffect(() => {
     if (!user || !user.id) return;
@@ -27,23 +26,18 @@ function CustomNavbar({ isLoggedIn, user, onLogout }) {
   } else {
     console.log(userInfo);
   }
-  
 
   const handleLogout = () => {
     onLogout();
-    navigate('/');
+    navigate("/");
   };
   return (
     <Navbar bg="dark" variant="dark" expand="lg">
       <Container>
         <LinkContainer to="/">
           <Navbar.Brand>
-            <img
-              src={process.env.PUBLIC_URL + '/static/img/logo.png'}
-              alt="Logo"
-              className="logo-img"
-            />
-          <span className="auction-text">Ticket Booking System</span>
+            <img src={process.env.PUBLIC_URL + "/static/img/logo.png"} alt="Logo" className="logo-img" />
+            <span className="auction-text">Ticket Booking System</span>
           </Navbar.Brand>
         </LinkContainer>
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
@@ -60,13 +54,16 @@ function CustomNavbar({ isLoggedIn, user, onLogout }) {
                 <LinkContainer to="/profile">
                   <NavDropdown.Item>Profile</NavDropdown.Item>
                 </LinkContainer>
-                {userInfo.isGuest ? ( 
+                {userInfo.isGuest ? (
                   <>
-                    <LinkContainer to="/profile">
+                    <LinkContainer to="/buy-ticket">
                       <NavDropdown.Item>Buy Ticket</NavDropdown.Item>
                     </LinkContainer>
+                    <LinkContainer to="/cart">
+                      <NavDropdown.Item>Cart</NavDropdown.Item>
+                    </LinkContainer>
                   </>
-                  ) : (
+                ) : (
                   <>
                     <LinkContainer to="/submit-event">
                       <NavDropdown.Item>Add Event</NavDropdown.Item>
@@ -74,7 +71,7 @@ function CustomNavbar({ isLoggedIn, user, onLogout }) {
                   </>
                 )}
                 <NavDropdown.Divider />
-            <NavDropdown.Item onClick={handleLogout}>Logout</NavDropdown.Item>
+                <NavDropdown.Item onClick={handleLogout}>Logout</NavDropdown.Item>
               </NavDropdown>
             ) : (
               <>

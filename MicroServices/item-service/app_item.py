@@ -568,6 +568,42 @@ def get_watchlist():
     return jsonify({'success': True, 'data': processed_listings}), 200
 
 
+# Route to display all discounts
+@app.route('/discount-list', methods=['GET'])
+def get_discounts():
+    db_conn = db.connect_to_database()
+
+    query = """
+    SELECT 
+        D.discountID,
+        D.name,
+        D.description,
+        D.startDate,
+        D.endDate,
+        D.discountPercentage,
+        D.imageUrl
+    FROM 
+        DiscountList D
+    WHERE 
+        D.startDate <= CURDATE() AND D.endDate >= CURDATE();
+    """
+
+    discounts = db.execute_query(db_connection=db_conn, query=query).fetchall()
+    processed_discounts = []
+    for discount in discounts:
+        processed_discount = {}
+        for key, value in discount.items():
+            if isinstance(value, Decimal):
+                processed_discount[key] = str(value)
+            elif isinstance(value, datetime):
+                processed_discount[key] = value.strftime('%Y-%m-%d')
+            else:
+                processed_discount[key] = value
+        processed_discounts.append(processed_discount)
+
+    return jsonify({'success': True, 'data': processed_discounts})
+
+
 # Run listener
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 9991))

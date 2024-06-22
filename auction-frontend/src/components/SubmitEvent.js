@@ -3,11 +3,14 @@ import useLocalStorage from "../hooks/useLocalStorage";
 import axios from "axios";
 import config from "../config";
 
+
+
 const SubmitEventForm = (user) => {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
     location: "",
+    seat: "",
     startDate: "",
     endDate: "",
     openTicket: "",
@@ -28,12 +31,13 @@ const SubmitEventForm = (user) => {
     const form = new FormData();
     form.append("name", formData.name);
     form.append("description", formData.description);
-    form.append("startPrice", formData.startPrice);
-    form.append("buyNowPrice", formData.buyNowPrice);
-    form.append("quantity", formData.quantity);
-    form.append("shippingCosts", formData.shippingCosts);
-    form.append("endDate", formData.expiration);
+    form.append("location", formData.location);
+    form.append("seat", formData.seat);
     form.append("startDate", formData.startDate);
+    form.append("endDate", formData.endDate);
+    form.append("openTicket", formData.shippingCosts);
+    form.append("closeTicket", formData.expiration);
+    form.append("totalTicket", formData.startDate);
     form.append("file", formData.photo);
     form.append("userID", user.id);
     const response = await axios({
@@ -48,14 +52,14 @@ const SubmitEventForm = (user) => {
       alert("Listing submitted successfully");
       setFormData({
         name: "",
-        description: "",
-        startPrice: "",
-        quantity: "",
-        shippingCosts: "",
-        expiration: "",
-        startDate: "",
-        buyNowPrice: "",
-        photo: null,
+      description: "",
+      location: "",
+      seat: "",
+      startDate: "",
+      endDate: "",
+      openTicket: "",
+      closeTicket: "",
+      totalTicket: "",
       });
     }
   };
@@ -64,7 +68,7 @@ const SubmitEventForm = (user) => {
     <div className="container pt-5">
       <div className="row mt-2">
         <div className="col">
-          <h1>Submit a Event</h1>
+          <h1>Add Event</h1>
         </div>
       </div>
       <div className="row mt-2">
@@ -92,7 +96,23 @@ const SubmitEventForm = (user) => {
         <div className="row mt-2">
           <div className="col-4">
             <label htmlFor="description" className="form-label">
-              Enter your item's description:
+              Event description:
+              <strong style={{ color: "red" }}>*</strong>
+            </label>
+            <input
+              type="text"
+              className="form-control"
+              id="description"
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+            />
+          </div>
+        </div>
+        <div className="row mt-2">
+          <div className="col-4">
+            <label htmlFor="description" className="form-label">
+              Event location:
               <strong style={{ color: "red" }}>*</strong>
             </label>
             <input
@@ -200,25 +220,22 @@ const SubmitEventForm = (user) => {
             />
           </div>
         </div>
-        <div className="row mt-2">
+
+        <div className="row my-5">
           <div className="col-4">
-            <label htmlFor="photo" className="form-label">
-              Include a photo of your item:
+            <label htmlFor="expiration" className="form-label">
+              Add ticket types:
+              <strong style={{ color: "red" }}>*</strong>
             </label>
-            <input
-              className="form-control"
-              type="file"
-              id="photo"
-              name="photo"
-              accept="image/*"
-              onChange={handleChange}
-            />
+            <a href="#" class="add">+</a>
+            <div class="inp_group"></div>
           </div>
         </div>
+
         <div className="row my-5">
           <div className="col-4">
             <button className="btn main-button btn-primary" type="submit">
-              Submit Listing
+              Submit Event
             </button>
           </div>
         </div>

@@ -68,7 +68,7 @@ function CustomNavbar({ isLoggedIn, user, onLogout }) {
                   </>
                   ) : (
                   <>
-                    <LinkContainer to="/profile">
+                    <LinkContainer to="/submit-event">
                       <NavDropdown.Item>Add Event</NavDropdown.Item>
                     </LinkContainer>
                   </>

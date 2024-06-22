@@ -318,7 +318,7 @@ const SubmitEventForm = ({ user }) => {
             <label htmlFor="photo" className="form-label">
               Event Photo:<strong style={{ color: "red" }}>*</strong>
             </label>
-            <input type="file" className="form-control" id="photo" name="photo" onChange={handleChange} required />
+            <input type="file" className="form-control" id="photo" name="photo" onChange={handleChange} />
           </div>
         </div>
 

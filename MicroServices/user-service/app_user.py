@@ -129,11 +129,11 @@ def get_user_profile(user_id):
 def set_user_profile(user_id):
     # get data from FE
     data = request.json
-    username = data['username']
-    fname = data['fname']
-    lname = data['lname']
+    username = data['userName']
+    fname = data['firstName']
+    lname = data['lastName']
     email = data['email']
-    phone = data['phone']
+    phone = data['phoneNumber']
     print(data, username, fname, lname, email, phone)
 
     # connect to db

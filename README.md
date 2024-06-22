@@ -173,7 +173,6 @@ There are five mircroservices backend talking and communicating with each other.
 	
 	```
  	pip install flask
- 	pip install mysqlclient
 	pip install python-dotenv
 	pip install flask-cors
 	pip install pymysql

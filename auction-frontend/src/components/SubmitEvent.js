@@ -61,7 +61,7 @@ const SubmitEventForm = ({ user }) => {
     form.append("ticket_start_date", formData.ticket_start_date);
     form.append("ticket_end_date", formData.ticket_end_date);
     form.append("file", formData.photo);
-    form.append("userID", user.id);
+    form.append("user_id", user.id);
 
     formData.tickets.forEach((ticket, index) => {
       form.append(`tickets[${index}][ticket_total]`, ticket.ticket_total);
@@ -318,7 +318,7 @@ const SubmitEventForm = ({ user }) => {
             <label htmlFor="photo" className="form-label">
               Event Photo:<strong style={{ color: "red" }}>*</strong>
             </label>
-            <input type="file" className="form-control" id="photo" name="photo" onChange={handleChange} required />
+            <input type="file" className="form-control" id="photo" name="photo" onChange={handleChange} />
           </div>
         </div>
 

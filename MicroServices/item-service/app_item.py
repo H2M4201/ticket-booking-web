@@ -65,11 +65,11 @@ def submit_event():
 
             query = """
             INSERT INTO Events (eventName, eventDescription, eventLocation, organizerID, startDate, endDate, 
-                                openForTicket, closeForTicket) 
-            VALUES (%s, %s, %s, %d, %s, %s, %s, %s, %s)
+                                openForTicket, closeForTicket, eventStatus) 
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             """
             cursor.execute(query, (event_name, event_desc, event_loc, user_id, event_start_date, event_end_date,
-                                   ticket_start_date, ticket_end_date))
+                                   ticket_start_date, ticket_end_date, ''))
             event_id = cursor.lastrowid
 
             tickets = json.loads(request.form['tickets'])
@@ -77,11 +77,11 @@ def submit_event():
                 ticket_total = ticket['ticket_total']
                 ticket_sold = 0
                 ticket_name = ticket['ticket_name']
-                ticket_price = process_price(ticket['ticket_price'])
+                ticket_price = ticket['ticket_price']
 
                 query = """
                 INSERT INTO Tickets (eventID, type, price, total, sold) 
-                VALUES (%d, %s, %d, %d, %d)
+                VALUES (%s, %s, %s, %s, %s)
                 """, (event_id, ticket_name, ticket_price, ticket_total, ticket_sold)
                 cursor.execute(query, (event_id, ticket_total, ticket_sold, ticket_name, ticket_price))
 
@@ -170,7 +170,7 @@ def get_events():
             if isinstance(value, Decimal):
                 processed_event[key] = str(value)
             elif isinstance(value, datetime):
-                processed_event[key] = value.strftime('%Y-%m-%d %H:%M')
+                processed_event[key] = value.strftime('%Y-%m-%s %H:%M')
             else:
                 processed_event[key] = value
         processed_events.append(processed_event)

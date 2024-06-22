@@ -49,25 +49,25 @@ CREATE TABLE Events (
     endDate DATETIME NOT NULL,
     openForTicket DATETIME NOT NULL,
     closeForTicket DATETIME NOT NULL,
-    status VARCHAR(20),
+    eventStatus VARCHAR(20),
     PRIMARY KEY (eventID),
     FOREIGN KEY (organizerID) REFERENCES Users(userID)
 );
 
 INSERT INTO Events (eventName, eventDescription, eventLocation, organizerID, startDate, endDate, openForTicket, 
-    closeForTicket, status) VALUES
+    closeForTicket, eventStatus) VALUES
     ('Worlds 2024', 'League of Legends finals', 'Beijing', 1, '2024-10-23', '2024-11-23', '2024-06-13', '2024-09-15','');
 
 INSERT INTO Events (eventName, eventDescription, eventLocation, organizerID, startDate, endDate, openForTicket, 
-    closeForTicket, status) VALUES
+    closeForTicket, eventStatus) VALUES
     ('World Cup 2022', 'Football event', 'Qatar', 2, '2022-11-19', '2022-12-18', '2019-06-13', '2024-09-15', '');
 
 INSERT INTO Events (eventName, eventDescription, eventLocation, organizerID, startDate, endDate, openForTicket, 
-    closeForTicket, status) VALUES
+    closeForTicket, eventStatus) VALUES
     ('EPL 2025', 'Football event', 'UK', 2, '2025-08-20', '2026-05-18', '2025-04-03', '2026-05-16', '');
 
 INSERT INTO Events (eventName, eventDescription, eventLocation, organizerID, startDate, endDate, openForTicket, 
-    closeForTicket, status) VALUES
+    closeForTicket, eventStatus) VALUES
     ('NTPMM', 'Concert event', 'Hanoi', 1, '2024-08-20', '2024-08-20', '2025-03-03', '2026-08-16', '');
 
 

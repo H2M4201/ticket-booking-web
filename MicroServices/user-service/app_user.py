@@ -1,11 +1,10 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, g
 from flask_cors import CORS
 import os
 import database.db_connector as db
-from datetime import date
+from datetime import date, datetime
 from werkzeug.security import generate_password_hash, check_password_hash
-from decimal import Decimal, InvalidOperation, ROUND_DOWN
-from datetime import datetime
+from decimal import Decimal
 
 # Set up upload folder
 UPLOAD_FOLDER = 'static/img/'
@@ -14,102 +13,103 @@ UPLOAD_FOLDER = 'static/img/'
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config.from_mapping(SECRET_KEY='dev')
-CORS(app)
-  # Enable CORS
+CORS(app)  # Enable CORS
 
+@app.before_request
+def before_request():
+    """Open a new database connection before each request."""
+    g.db = db.connect_to_database()
 
-# backend logic to 
+@app.teardown_request
+def teardown_request(exception):
+    """Close the database connection after each request."""
+    db_conn = getattr(g, 'db', None)
+    if db_conn is not None:
+        db_conn.close()
+
 @app.route('/register', methods=['POST'])
 def register():
-    # get input from FE
     data = request.json
-    username = data['username']
-    password = data['password']
-    confirm_password = data['confirm_password']
-    fname = data['fname']
-    lname = data['lname']
-    email = data['email']
-    phone = data['phone']
-    bank = ''
-    _type = data["type"].lower()
+    username = data.get('username')
+    password = data.get('password')
+    confirm_password = data.get('confirm_password')
+    fname = data.get('fname')
+    lname = data.get('lname')
+    email = data.get('email')
+    phone = data.get('phone')
+    _type = data.get("type", "").lower()
 
-    # connect to db
-    db_conn = db.connect_to_database()
     error = None
 
-    # check condition
     if not username or not password or not confirm_password:
         error = 'Username and Password are required.'
     elif password != confirm_password:
         error = 'Passwords do not match.'
     elif db.execute_query(
-        db_conn,
+        g.db,
         'SELECT userID FROM Users WHERE userName = %s', (username,)
     ).fetchone() is not None:
         error = 'User already registered.'
     elif _type not in ['guest', 'enterprise', 'admin']:
-        error = 'Account type can only be Guest, Enterprise or Admin'
+        error = 'Account type can only be Guest, Enterprise, or Admin'
 
     if error:
         return jsonify({'success': False, 'error': error}), 400
 
-    # hash user password and collect account's create date
     hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
     date_joined = date.today().strftime("%Y-%m-%d")
 
-    #define account type
-    isGuest = False
-    isEnterprise = False
-    isAdmin = False
+    isGuest = _type == 'guest'
+    isEnterprise = _type == 'enterprise'
+    isAdmin = _type == 'admin'
 
-    if _type == 'guest':
-        isGuest = True
-    if _type == 'enterprise':
-        isEnterprise = True
-    if _type == 'admin':
-        isAdmin = True
-
-    # insert new user info to db
-    db.execute_query(
-        db_conn,
-        'INSERT INTO Users (userName, password, firstName, lastName, email, phoneNumber, bankAccount, dateJoined, \
-            isGuest, isEnterprise, isAdmin) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %r, %r, %r)',
-        (username, hashed_password, fname, lname, email, phone, bank, date_joined, isGuest, isEnterprise, isAdmin)
-    )
+    try:
+        cursor = g.db.cursor()
+        cursor.execute(
+            'INSERT INTO Users (userName, password, firstName, lastName, email, phoneNumber, bankAccount, dateJoined, \
+                isGuest, isEnterprise, isAdmin) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)',
+            (username, hashed_password, fname, lname, email, phone, '', date_joined, isGuest, isEnterprise, isAdmin)
+        )
+        g.db.commit()
+        cursor.close()
+    except Exception as e:
+        g.db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
 
     return jsonify({'success': True, 'message': 'User registered successfully'}), 201
 
-
 @app.route('/login', methods=['POST'])
 def login():
-    # get input from FE
     data = request.json
-    username = data['username']
-    password = data['password']
+    username = data.get('username')
+    password = data.get('password')
 
-    # query to db looking for user info
-    db_conn = db.connect_to_database()
     user = db.execute_query(
-        db_conn,
+        g.db,
         'SELECT * FROM Users WHERE userName = %s', (username,)
     ).fetchone()
 
-    # check password matching
     if user and check_password_hash(user['password'], password):
-
-        return jsonify({'success': True, 'user': {'username': user['userName'], 'email': user['email'], 'id': user['userID'], 'isAdmin': user['isAdmin']}})
+        return jsonify({
+            'success': True,
+            'user': {
+                'username': user['userName'],
+                'email': user['email'],
+                'id': user['userID'],
+                'isAdmin': user['isAdmin']
+            }
+        })
 
     return jsonify({'success': False, 'error': 'Invalid username or password'}), 401
 
-
 @app.route('/user/<int:user_id>/profile', methods=['GET'])
 def get_user_profile(user_id):
-    # query user info
-    db_conn = db.connect_to_database()
     user_query = "SELECT * FROM Users WHERE userID = %s;"
-    user = db.execute_query(db_connection=db_conn, query=user_query, query_params=(user_id,)).fetchone()
+    user = db.execute_query(g.db, user_query, (user_id,)).fetchone()
 
-    # process querired info and return to FE
+    if not user:
+        return jsonify({'success': False, 'error': 'User not found'}), 404
+
     processed_listing = {}
     for key, value in user.items():
         if isinstance(value, Decimal):
@@ -119,81 +119,70 @@ def get_user_profile(user_id):
         else:
             processed_listing[key] = value
 
-    if not user:
-        return jsonify({'success': False, 'error': 'User not found'}), 404
-
     return jsonify({'success': True, 'data': processed_listing})
-
 
 @app.route('/user/<int:user_id>/profile', methods=['POST'])
 def set_user_profile(user_id):
-    # get data from FE
     data = request.json
-    username = data['userName']
-    fname = data['firstName']
-    lname = data['lastName']
-    email = data['email']
-    phone = data['phoneNumber']
-    print(data, username, fname, lname, email, phone)
+    fname = data.get('firstName')
+    lname = data.get('lastName')
+    phone = data.get('phoneNumber')
 
-    # connect to db
-    db_conn = db.connect_to_database()
-    error = None
+    if not all([fname, lname, phone]):
+        return jsonify({'success': False, 'message': 'Missing required fields'}), 400
 
-    db.execute_query(
-        db_conn,
-        'UPDATE Users SET firstName = %s, lastName = %s, phoneNumber = %s',
-        (fname, lname, phone)
-    )
+    try:
+        cursor = g.db.cursor()
+        cursor.execute(
+            'UPDATE Users SET firstName = %s, lastName = %s, phoneNumber = %s WHERE userID = %s',
+            (fname, lname, phone, user_id)
+        )
+        g.db.commit()
+        cursor.close()
+    except Exception as e:
+        g.db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
 
-    return jsonify({'success': True, 'message': 'User profile updated'}), 201
-
-
+    return jsonify({'success': True, 'message': 'User profile updated'}), 200
 
 @app.route('/user/<int:user_id>/ChangePassword', methods=['POST'])
-def change_password (user_id):
-    # get data from FE
+def change_password(user_id):
     data = request.json
+    pwd = data.get('password')
+    new_pwd = data.get('new_pwd')
+    confirm_pwd = data.get('confirm_pwd')
 
-    if data is None:
-        return jsonify({'error': 'Invalid JSON'}), 400
-    pwd = data['password']
-    new_pwd = data['new_pwd']
-    confirm_pwd = data['confirm_pwd']
-    print(data)
-
-    # query to db looking for user info
-    db_conn = db.connect_to_database()
-    error = None
     user = db.execute_query(
-        db_conn,
+        g.db,
         'SELECT * FROM Users WHERE userID = %s', (user_id,)
     ).fetchone()
 
-
-    # check condition
+    error = None
     if not pwd or not new_pwd or not confirm_pwd:
         error = 'Old Password and New password are required.'
-    elif not check_password_hash(user['password'], pwd):
+    elif not user or not check_password_hash(user['password'], pwd):
         error = 'Old Password not correct.'
     elif new_pwd != confirm_pwd:
         error = 'New Passwords do not match.'
 
     if error:
         return jsonify({'success': False, 'error': error}), 400
-    
-    
+
     hashed_password = generate_password_hash(new_pwd, method='pbkdf2:sha256')
-    db.execute_query(
-        db_conn,
-        'UPDATE Users SET password = %s', (hashed_password)
-    )
+
+    try:
+        cursor = g.db.cursor()
+        cursor.execute(
+            'UPDATE Users SET password = %s WHERE userID = %s', (hashed_password, user_id)
+        )
+        g.db.commit()
+        cursor.close()
+    except Exception as e:
+        g.db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
 
     return jsonify({'success': True, 'message': 'Password changed successfully'}), 200
 
-
-
-# Run listener
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 9990))
     app.run(port=port, debug=True, host='0.0.0.0')

@@ -13,7 +13,7 @@ UPLOAD_FOLDER = 'static/img/'
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config.from_mapping(SECRET_KEY='dev')
-CORS(app)  # Enable CORS
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 @app.before_request
 def before_request():

@@ -47,7 +47,7 @@ def submit_event():
         event_end_date = request.form['event_end_date']
         ticket_start_date = request.form['ticket_start_date']
         ticket_end_date = request.form['ticket_end_date']
-        userID = request.form['userID']
+        user_id = request.form['user_id']
 
         if 'file' in request.files:
             photo = request.files['file']
@@ -59,29 +59,30 @@ def submit_event():
             filepath = os.path.join("./" + app.config['UPLOAD_FOLDER'], str(uuid.uuid4()) + '.jpg')
             photo.save(filepath)
 
+
         try:
             cursor = db_conn.cursor()
 
             query = """
-            INSERT INTO Events (event_name, event_desc, event_loc, event_start_date, event_end_date, 
-                                ticket_start_date, ticket_end_date, photoPath, userID) 
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO Events (eventName, eventDescription, eventLocation, organizerID, startDate, endDate, 
+                                openForTicket, closeForTicket) 
+            VALUES (%s, %s, %s, %d, %s, %s, %s, %s, %s)
             """
-            cursor.execute(query, (event_name, event_desc, event_loc, event_start_date, event_end_date,
-                                   ticket_start_date, ticket_end_date, filepath, userID))
+            cursor.execute(query, (event_name, event_desc, event_loc, user_id, event_start_date, event_end_date,
+                                   ticket_start_date, ticket_end_date))
             event_id = cursor.lastrowid
 
             tickets = json.loads(request.form['tickets'])
             for ticket in tickets:
                 ticket_total = ticket['ticket_total']
-                ticket_sold = ticket['ticket_sold']
+                ticket_sold = 0
                 ticket_name = ticket['ticket_name']
                 ticket_price = process_price(ticket['ticket_price'])
 
                 query = """
-                INSERT INTO Tickets (event_id, ticket_total, ticket_sold, ticket_name, ticket_price) 
-                VALUES (%s, %s, %s, %s, %s)
-                """
+                INSERT INTO Tickets (eventID, type, price, total, sold) 
+                VALUES (%d, %s, %d, %d, %d)
+                """, (event_id, ticket_name, ticket_price, ticket_total, ticket_sold)
                 cursor.execute(query, (event_id, ticket_total, ticket_sold, ticket_name, ticket_price))
 
             db_conn.commit()

@@ -14,6 +14,7 @@ import useLocalStorage from "./hooks/useLocalStorage";
 import SubmitEventForm from "./components/SubmitEvent";
 import BuyTicket from "./components/BuyTicket";
 import Cart from "./components/Cart";
+import SubmitDiscountForm from "./components/SubmitDiscount";
 
 function App() {
   const [user, setUser] = useLocalStorage("user", null);
@@ -37,6 +38,7 @@ function App() {
         <Route path="/profile" element={<Profile user={user} />} />
         <Route path="/submit-listing" element={<SubmitListingForm />} />
         <Route path="/submit-event" element={<SubmitEventForm user={user} />} />
+        <Route path="/submit-discount" element={<SubmitDiscountForm user={user} />} />
         <Route path="/buy-ticket" element={<BuyTicket user={user} />} />
         <Route path="/cart" element={<Cart user={user} />} />
         {/* other routes */}

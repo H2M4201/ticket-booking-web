@@ -2,9 +2,11 @@ import React, { useState } from "react";
 import axios from "axios";
 import config from "../config";
 
-const SubmitEventForm = ({ user }) => {
+
+
+const SubmitDiscountForm = ({ user }) => {
   const [formData, setFormData] = useState({
-    event_name: "",
+    discount_name: "",
     event_desc: "",
     event_loc: "",
     event_start_date: "",
@@ -317,4 +319,4 @@ const SubmitEventForm = ({ user }) => {
   );
 };
 
-export default SubmitEventForm;
+export default SubmitDiscountForm;

@@ -68,6 +68,9 @@ function CustomNavbar({ isLoggedIn, user, onLogout }) {
                     <LinkContainer to="/submit-event">
                       <NavDropdown.Item>Add Event</NavDropdown.Item>
                     </LinkContainer>
+                    <LinkContainer to="/submit-discount">
+                      <NavDropdown.Item>Add Discount</NavDropdown.Item>
+                    </LinkContainer>
                   </>
                 )}
                 <NavDropdown.Divider />

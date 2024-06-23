@@ -76,7 +76,7 @@ DROP TABLE IF EXISTS Tickets;
 CREATE TABLE Tickets (
     ticketID INT(11) UNIQUE NOT NULL AUTO_INCREMENT,
     eventID INT(11) NOT NULL,
-    type VARCHAR(20),
+    ticketType VARCHAR(20),
     price DECIMAL(10, 3),
     total INT(11),
     sold INT(11),
@@ -84,15 +84,15 @@ CREATE TABLE Tickets (
     FOREIGN KEY (eventID) REFERENCES Events(eventID)
 );
 
-INSERT INTO Tickets (eventID, type, price, total, sold) 
+INSERT INTO Tickets (eventID, ticketType, price, total, sold) 
     VALUES (2, 'VIP', 1500, 1000, 0);
-INSERT INTO Tickets (eventID, type, price, total, sold) 
+INSERT INTO Tickets (eventID, ticketType, price, total, sold) 
     VALUES (1, 'VIP', 1200, 1000, 0);
-INSERT INTO Tickets (eventID, type, price, total, sold) 
+INSERT INTO Tickets (eventID, ticketType, price, total, sold) 
     VALUES (3, 'Normal', 1500, 1000, 0);
-INSERT INTO Tickets (eventID, type, price, total, sold) 
+INSERT INTO Tickets (eventID, ticketType, price, total, sold) 
     VALUES (2, 'Prem', 1000, 1000, 0);
-INSERT INTO Tickets (eventID, type, price, total, sold) 
+INSERT INTO Tickets (eventID, ticketType, price, total, sold) 
     VALUES (4, 'VIP', 200, 1000, 0);
 
 CREATE TABLE Feedbacks (

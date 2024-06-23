@@ -25,31 +25,31 @@ app.config.from_mapping(SECRET_KEY='dev')
 CORS(app)  # Enable CORS
 
 # The function for keep looping and check the status of the listings
-def update_listing_status():
+def update_events_status():
     while True:
         current_time = datetime.datetime.now()
         db_conn = db.connect_to_database()
 
         # Update listings to 'active' if current time is equal to startDate
         update_query = """
-        UPDATE Listings 
-        SET status = 'active' 
-        WHERE startDate <= %s AND endDate > %s AND status != 'active';
+        UPDATE Events 
+        SET eventStatus = 'active' 
+        WHERE startDate <= %s AND endDate > %s AND eventStatus != 'active';
         """
         db.execute_query(db_connection=db_conn, query=update_query, query_params=(current_time, current_time))
 
         # Update listings to 'hold' if current time is greater than or equal to endDate
         update_query = """
-        SELECT listingID 
-        from Listings 
-        WHERE endDate <= %s AND status = 'active';
+        SELECT eventID 
+        from Events 
+        WHERE endDate <= %s AND eventStatus = 'active';
         """
-        ended_listings = db.execute_query(db_connection=db_conn, query=update_query, query_params=(current_time,)).fetchall()
-        for listing in ended_listings:
-            listingID = listing['listingID']
+        ended_events = db.execute_query(db_connection=db_conn, query=update_query, query_params=(current_time,)).fetchall()
+        for e in ended_events:
+            eventID = e['eventID']
             url = 'http://localhost:9991/end-listing'  # Replace with your target URL
             data = {
-                'listingID': listingID
+                'eventID': eventID
             }
             headers = {
                 'Content-Type': 'application/json'  # Example header
@@ -62,20 +62,12 @@ def update_listing_status():
             else:
                 print("Error:", response.status_code, response.text)
 
-        
-        # Update countdown for active listings
-        update_query = """
-        UPDATE Listings 
-        SET countDown = TIMESTAMPDIFF(SECOND, %s, endDate) 
-        WHERE endDate > %s AND status = 'active';
-        """
-        db.execute_query(db_connection=db_conn, query=update_query, query_params=(current_time, current_time))
 
         # Sleep for 1 second before the next check, maybe we can change to 60s
-        time.sleep(1)
+        time.sleep(120)
 
 # Start the thread
-update_thread = threading.Thread(target=update_listing_status)
+update_thread = threading.Thread(target=update_events_status)
 update_thread.start()
 
 def process_price(raw_price):
@@ -89,63 +81,6 @@ def process_price(raw_price):
         return price
     except (InvalidOperation, ValueError):
         raise ValueError("Invalid start price")
-
-@app.route('/place-bid/<int:list_id>', methods=['POST'])
-def place_bid(list_id):
-        data = request.get_json()
-        user_id = data['userID']
-        bid_amt = process_price(data['bidAmt'])
-        bid_date = datetime.date.today()
-        db_conn = db.connect_to_database()
-
-        # Check if the current bid highest
-        query = "SELECT l.listingID, l.bidID, l.startPrice as startPrice, b.bidAmt as amount FROM Listings l LEFT JOIN Bids b ON l.bidID = b.bidID WHERE l.listingID = %s;"
-        high_bid = db.execute_query(db_connection=db_conn, query=query,
-                                    query_params=(list_id,)).fetchone()
-
-        valid_bid, message = validate_bid(bid_amt, high_bid)
-
-        # Find the email of the seller 
-        query = """
-        SELECT u.email as email
-        From Users u LEFT JOIN Listings l ON u.userID = l.userID
-        WHERE l.listingID = %s;
-        """
-        sellerEmail = db.execute_query(db_connection=db_conn, query=query,
-                                    query_params=(list_id,)).fetchone()
-        
-        # Find current highest buyer email
-        query = """
-        SELECT u.email as email
-        From Users u LEFT JOIN Bids b ON u.userID = b.userID
-        LEFT JOIN Listings l ON b.bidID = l.bidID
-        WHERE l.listingID = %s;
-        """
-        buyerEmail = db.execute_query(db_connection=db_conn, query=query,
-                                    query_params=(list_id,)).fetchone()
-
-        if not valid_bid:
-            flash(message, 'danger')
-            return jsonify({'success': False, "message": "invalid bid"}), 400
-        else:
-            query = "INSERT INTO Bids (userID, listingID, bidAmt, bidDate) VALUES (%s, %s, %s, %s)"
-            cursor = db.execute_query(db_connection=db_conn, query=query,
-                                      query_params=(user_id, list_id,
-                                                    bid_amt, bid_date))
-            bid_id = cursor.lastrowid
-
-            query = "UPDATE Listings SET bidID = %s WHERE listingID = %s;"
-            db.execute_query(db_connection=db_conn, query=query,
-                            query_params=(bid_id, list_id))
-            
-            # send alerts to seller and former buyer
-            if sellerEmail:
-                send_alert(sellerEmail['email'], "Someone has placed a bid on your listing.")
-            if buyerEmail:
-                send_alert(buyerEmail['email'], "Someone has placed a higher bid than you!")
-
-            flash(message, 'success')
-            return jsonify({'success': True, "message": "your bid has been placed"}), 200
 
 
 # Listener

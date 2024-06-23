@@ -110,7 +110,7 @@ There are five mircroservices backend talking and communicating with each other.
 	DROP DATABASE javaSavesUs;
 	CREATE DATABASE javaSavesUs;
 	USE javaSavesUs;
-	source D:/Distributed Application/DATH/database/javaSavesUs_db.sql;
+	source D:/Distributed Application/ticket-booking-web/database/javaSavesUs_db.sql;
 	```
 
 10. Create a .env File using IDE

@@ -1,6 +1,6 @@
 import uuid
 import requests
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, g
 from flask_cors import CORS
 from decimal import Decimal, InvalidOperation, ROUND_DOWN
 from datetime import datetime
@@ -33,117 +33,159 @@ def process_price(raw_price):
         return price
     except (InvalidOperation, ValueError):
         raise ValueError("Invalid price")
+    
+@app.before_request
+def before_request():
+    """Open a new database connection before each request."""
+    g.db = db.connect_to_database()
+
+@app.teardown_request
+def teardown_request(exception):
+    """Close the database connection after each request."""
+    db_conn = getattr(g, 'db', None)
+    if db_conn is not None:
+        db_conn.close()
 
 
 @app.route('/submit-event', methods=['POST'])
 def submit_event():
     db_conn = db.connect_to_database()
 
-    if request.method == 'POST':
-        event_name = request.form['event_name']
-        event_desc = request.form['event_desc']
-        event_loc = request.form['event_loc']
-        event_start_date = request.form['event_start_date']
-        event_end_date = request.form['event_end_date']
-        ticket_start_date = request.form['ticket_start_date']
-        ticket_end_date = request.form['ticket_end_date']
-        user_id = request.form['user_id']
+    event_name = request.form['event_name']
+    event_desc = request.form['event_desc']        
+    event_loc = request.form['event_loc']
+    event_start_date = request.form['event_start_date']
+    event_end_date = request.form['event_end_date']
+    ticket_start_date = request.form['ticket_start_date']
+    ticket_end_date = request.form['ticket_end_date']
+    user_id = request.form['user_id']
 
-        if 'file' in request.files:
-            photo = request.files['file']
-        else:
-            photo = None
+    if 'file' in request.files:
+        photo = request.files['file']
+    else:
+        photo = None
 
-        filepath = "./static/img/No_image_available.jpg"
-        if photo and photo.filename != '':
-            filepath = os.path.join("./" + app.config['UPLOAD_FOLDER'], str(uuid.uuid4()) + '.jpg')
-            photo.save(filepath)
+    filepath = "./static/img/No_image_available.jpg"
+    if photo and photo.filename != '':
+        filepath = os.path.join("./" + app.config['UPLOAD_FOLDER'], str(uuid.uuid4()) + '.jpg')
+        photo.save(filepath)
 
+    error = None
 
-        try:
-            cursor = db_conn.cursor()
+    if not event_name or not event_end_date or not event_end_date \
+        or not ticket_start_date or not ticket_end_date or not event_loc:
+        error = 'Missing required field.'
+    elif (datetime.strptime(event_start_date, '%Y-%m-%d') < datetime.strptime(event_end_date, '%Y-%m-%d')) \
+        or (datetime.strptime(ticket_start_date, '%Y-%m-%d') < datetime.strptime(ticket_end_date, '%Y-%m-%d')) \
+        or (datetime.strptime(event_start_date, '%Y-%m-%d') < datetime.strptime(ticket_start_date, '%Y-%m-%d')) \
+        or (datetime.strptime(event_end_date, '%Y-%m-%d') < datetime.strptime(ticket_end_date, '%Y-%m-%d')):
+        error = 'Unappropriate time for events and ticket selling.'
+   
+    if error:
+        return jsonify({'success': False, 'error': error}), 400
+
+    try:
+        cursor = db_conn.cursor()
+
+        query = """
+        INSERT INTO Events (eventName, eventDescription, eventLocation, organizerID, startDate, endDate, 
+                            openForTicket, closeForTicket, eventStatus) 
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """
+        cursor.execute(query, (event_name, event_desc, event_loc, user_id, event_start_date, event_end_date,
+                                ticket_start_date, ticket_end_date, ''))
+       
+
+        event_id = db.execute_query(
+          g.db,
+         'SELECT MAX(eventID) FROM Events'
+        ).fetchone()
+        print(event_id)
+        
+
+        tickets = json.loads(request.form['tickets'])
+        print(tickets)
+        for ticket in tickets:
+            ticket_total = ticket['ticket_total']
+            ticket_sold = 0
+            ticket_name = ticket['ticket_name']
+            ticket_price = ticket['ticket_price']
+
+            error = None
+
+            if not ticket_name or not ticket_price or not ticket_total \
+                or not ticket_start_date or not ticket_end_date or not ticket_total or not event_loc:
+                error = 'Missing required field.'
+            elif ticket_total < 0 or ticket_price < 0:
+                error = 'Unappropriate data values.'
+        
+            if error:
+                return jsonify({'success': False, 'error': error}), 400
 
             query = """
-            INSERT INTO Events (eventName, eventDescription, eventLocation, organizerID, startDate, endDate, 
-                                openForTicket, closeForTicket, eventStatus) 
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO Tickets (eventID, ticketType, price, total, sold) 
+            VALUES (%s, %s, %s, %s, %s)
             """
-            cursor.execute(query, (event_name, event_desc, event_loc, user_id, event_start_date, event_end_date,
-                                   ticket_start_date, ticket_end_date, ''))
-            event_id = cursor.lastrowid
+            cursor.execute(query, (event_id, ticket_total, ticket_sold, ticket_name, ticket_price))
 
-            tickets = json.loads(request.form['tickets'])
-            for ticket in tickets:
-                ticket_total = ticket['ticket_total']
-                ticket_sold = 0
-                ticket_name = ticket['ticket_name']
-                ticket_price = ticket['ticket_price']
-
-                query = """
-                INSERT INTO Tickets (eventID, type, price, total, sold) 
-                VALUES (%s, %s, %s, %s, %s)
-                """, (event_id, ticket_name, ticket_price, ticket_total, ticket_sold)
-                cursor.execute(query, (event_id, ticket_total, ticket_sold, ticket_name, ticket_price))
-
-            db_conn.commit()
-            return jsonify({'success': True, 'message': 'Event submitted successfully', 'eventID': event_id}), 200
-        except Exception as e:
-            db_conn.rollback()
-            return jsonify({'success': False, 'error': str(e)}), 500
-        finally:
-            cursor.close()
+        db_conn.commit()
+        return jsonify({'success': True, 'message': 'Event submitted successfully', 'eventID': 1}), 200
+    except Exception as e:
+        db_conn.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        cursor.close()
 
 
 @app.route('/update-event', methods=['POST'])
 def update_event():
     db_conn = db.connect_to_database()
 
-    if request.method == 'POST':
-        data = request.json
-        event_id = data['event_id']
-        event_name = data['event_name']
-        event_desc = data['event_desc']
-        event_loc = data['event_loc']
-        event_start_date = data['event_start_date']
-        event_end_date = data['event_end_date']
-        ticket_start_date = data['ticket_start_date']
-        ticket_end_date = data['ticket_end_date']
-        tickets = data['tickets']
+    data = request.json
+    event_id = data['event_id']
+    event_name = data['event_name']
+    event_desc = data['event_desc']
+    event_loc = data['event_loc']
+    event_start_date = data['event_start_date']
+    event_end_date = data['event_end_date']
+    ticket_start_date = data['ticket_start_date']
+    ticket_end_date = data['ticket_end_date']
+    tickets = data['tickets']
 
-        try:
-            cursor = db_conn.cursor()
+    try:
+        cursor = db_conn.cursor()
+
+        query = """
+        UPDATE Events
+        SET eventName = %s, eventDescription = %s, eventLocation = %s, startDate = %s, 
+            endDate = %s, openForTicket = %s, closeForTicket = %s
+        WHERE eventID = %s
+        """
+        cursor.execute(query, (event_name, event_desc, event_loc, event_start_date, event_end_date,
+                                ticket_start_date, ticket_end_date, event_id))
+
+        query = "DELETE FROM Tickets WHERE event_id = %s"
+        cursor.execute(query, (event_id,))
+
+        for ticket in tickets:
+            ticket_total = ticket['ticket_total']
+            ticket_sold = ticket['ticket_sold']
+            ticket_name = ticket['ticket_name']
+            ticket_price = process_price(ticket['ticket_price'])
 
             query = """
-            UPDATE Events
-            SET event_name = %s, event_desc = %s, event_loc = %s, event_start_date = %s, 
-                event_end_date = %s, ticket_start_date = %s, ticket_end_date = %s
-            WHERE event_id = %s
+            INSERT INTO Tickets (event_id, ticket_total, ticket_sold, ticket_name, ticket_price) 
+            VALUES (%s, %s, %s, %s, %s)
             """
-            cursor.execute(query, (event_name, event_desc, event_loc, event_start_date, event_end_date,
-                                   ticket_start_date, ticket_end_date, event_id))
+            cursor.execute(query, (event_id, ticket_total, ticket_sold, ticket_name, ticket_price))
 
-            query = "DELETE FROM Tickets WHERE event_id = %s"
-            cursor.execute(query, (event_id,))
-
-            for ticket in tickets:
-                ticket_total = ticket['ticket_total']
-                ticket_sold = ticket['ticket_sold']
-                ticket_name = ticket['ticket_name']
-                ticket_price = process_price(ticket['ticket_price'])
-
-                query = """
-                INSERT INTO Tickets (event_id, ticket_total, ticket_sold, ticket_name, ticket_price) 
-                VALUES (%s, %s, %s, %s, %s)
-                """
-                cursor.execute(query, (event_id, ticket_total, ticket_sold, ticket_name, ticket_price))
-
-            db_conn.commit()
-            return jsonify({'success': True, 'message': 'Event updated successfully', 'eventID': event_id}), 200
-        except Exception as e:
-            db_conn.rollback()
-            return jsonify({'success': False, 'error': str(e)}), 500
-        finally:
-            cursor.close()
+        db_conn.commit()
+        return jsonify({'success': True, 'message': 'Event updated successfully', 'eventID': event_id}), 200
+    except Exception as e:
+        db_conn.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        cursor.close()
 
 
 @app.route('/get-events', methods=['GET'])

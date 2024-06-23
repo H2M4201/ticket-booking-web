@@ -40,11 +40,37 @@ function Register() {
                 type: formData.type
             });
 
-            if (response.data.success) {
-                alert('Registration successful');
-                navigate('/login');
+            if (response.status === 200) {
+                console.log('Register successfully!!:', response.data);
+
+                try {
+                    const response_log = await axios.post(`${config.logServiceUrl}/log`, {
+                        msg: formData.username + 'register successfully.'
+                    });
+                    if (response_log.status === 200) {
+                        console.log('register information saved successfully:', response_log.data);
+                    } else {
+                        console.error('register information failed to be saved:', response_log);
+                    }
+                } catch (error) {
+                    console.error('There was an error while saving the register information:', error);
+                }
+                navigate('/');   
             }
         } catch (error) {
+            try {
+                const response_log = await axios.post(`${config.logServiceUrl}/log`, {
+                    msg: formData.username + 'register failed.'
+                });
+                if (response_log.status === 200) {
+                    console.log('register information saved successfully:', response_log.data);
+                } else {
+                    console.error('register information failed to be saved:', response_log);
+                }
+            } catch (error) {
+                console.error('There was an error while saving the register information:', error);
+            }
+
             alert('An error occurred during registration');
         }
     };

@@ -31,7 +31,7 @@ function ResetPassword({ onReset }) {
 
                 try {
                     const response_log = await axios.post(`${config.logServiceUrl}/log`, {
-                        msg: formData.username += ' password reset successfully.'
+                        msg: formData.username + ' password reset successfully.'
                     });
                     if (response_log.status === 200) {
                         console.log('Password reset information saved successfully:', response_log.data);
@@ -43,13 +43,24 @@ function ResetPassword({ onReset }) {
                 }
 
                 navigate('/');
-            } else {
-                console.error('Password reset failed:', response);
-                alert('Password reset failed')
             }
         } catch (error) {
+            
+            try {
+                const response_log = await axios.post(`${config.logServiceUrl}/log`, {
+                    msg: formData.username + ' password reset failed.'
+                });
+                if (response_log.status === 200) {
+                    console.log('Password reset information saved successfully:', response_log.data);
+                } else {
+                    console.error('Password reset information failed to be saved:', response_log);
+                }
+            } catch (error) {
+                console.error('There was an error while saving the password reset information:', error);
+            }
+
             console.error('There was an error during the password reset process:', error);
-            alert('Password reset failed')
+            alert('Password reset failed');
         }
     };
 

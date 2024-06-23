@@ -35,23 +35,32 @@ function ChangePassword ({onChangePwd, user}) {
 
                 try {
                     const response_log = await axios.post(`${config.logServiceUrl}/log`, {
-                        msg: formData.username += ' password changed successfully.'
+                        msg: user.username + ' password changed successfully.'
                     });
                     if (response_log.status === 200) {
-                        console.log('Login information saved successfully:', response_log.data);
+                        console.log('Password change information saved successfully:', response_log.data);
                     } else {
-                        console.error('Login information failed to be saved:', response_log);
+                        console.error('Password change information failed to be saved:', response_log);
                     }
                 } catch (error) {
-                    console.error('There was an error while saving the login information:', error);
+                    console.error('There was an error while saving the password change information:', error);
                 }
 
                 navigate('/');
-            } else {
-                console.error('Login failed:', response);
-                alert('login failed')
             }
         } catch (error) {
+            try {
+                const response_log = await axios.post(`${config.logServiceUrl}/log`, {
+                    msg: user.username + ' password changed failed.'
+                });
+                if (response_log.status === 200) {
+                    console.log('Password change information saved successfully:', response_log.data);
+                } else {
+                    console.error('Password change information failed to be saved:', response_log);
+                }
+            } catch (error) {
+                console.error('There was an error while saving the password change information:', error);
+            }
             console.error('There was an error during the login process:', error);
             alert('login failed')
         }

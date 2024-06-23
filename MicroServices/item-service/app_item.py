@@ -203,30 +203,78 @@ def get_events():
 
     query = """
     SELECT 
-        E.*, 
-        GROUP_CONCAT(T.ticket_name, ':', T.ticket_price SEPARATOR ';') AS tickets
+        E.eventID, 
+        E.eventName, 
+        E.eventDescription, 
+        E.eventLocation, 
+        E.organizerID, 
+        E.startDate, 
+        E.endDate, 
+        E.openForTicket, 
+        E.closeForTicket, 
+        E.eventStatus,
+        T.ticketID,
+        T.ticketType,
+        T.price,
+        T.total,
+        T.sold,
+        D.discountID,
+        D.discountName,
+        D.discountPercent,
+        D.discountDescription,
+        D.discountStartDate,
+        D.discountEndDate
     FROM 
         Events E
     LEFT JOIN 
-        Tickets T ON E.event_id = T.event_id
-    GROUP BY 
-        E.event_id
+        Tickets T ON E.eventID = T.eventID
+    LEFT JOIN 
+        Discounts D ON T.ticketID = D.ticketID
     """
 
     events = db.execute_query(db_connection=db_conn, query=query).fetchall()
-    processed_events = []
-    for event in events:
-        processed_event = {}
-        for key, value in event.items():
-            if isinstance(value, Decimal):
-                processed_event[key] = str(value)
-            elif isinstance(value, datetime):
-                processed_event[key] = value.strftime('%Y-%m-%s %H:%M')
-            else:
-                processed_event[key] = value
-        processed_events.append(processed_event)
+    processed_events = {}
+    
+    for row in events:
+        event_id = row['eventID']
+        ticket_id = row['ticketID']
+        
+        if event_id not in processed_events:
+            processed_events[event_id] = {
+                'eventID': row['eventID'],
+                'eventName': row['eventName'],
+                'eventDescription': row['eventDescription'],
+                'eventLocation': row['eventLocation'],
+                'organizerID': row['organizerID'],
+                'startDate': row['startDate'].strftime('%Y-%m-%d %H:%M') if row['startDate'] else None,
+                'endDate': row['endDate'].strftime('%Y-%m-%d %H:%M') if row['endDate'] else None,
+                'openForTicket': row['openForTicket'].strftime('%Y-%m-%d %H:%M') if row['openForTicket'] else None,
+                'closeForTicket': row['closeForTicket'].strftime('%Y-%m-%d %H:%M') if row['closeForTicket'] else None,
+                'eventStatus': row['eventStatus'],
+                'tickets': {}
+            }
+        
+        if ticket_id not in processed_events[event_id]['tickets']:
+            processed_events[event_id]['tickets'][ticket_id] = {
+                'ticketID': row['ticketID'],
+                'ticketType': row['ticketType'],
+                'price': str(row['price']) if row['price'] else None,
+                'total': row['total'],
+                'sold': row['sold'],
+                'discounts': []
+            }
+        
+        if row['discountID']:
+            processed_events[event_id]['tickets'][ticket_id]['discounts'].append({
+                'discountID': row['discountID'],
+                'discountName': row['discountName'],
+                'discountPercent': str(row['discountPercent']) if row['discountPercent'] else None,
+                'discountDescription': row['discountDescription'],
+                'discountStartDate': row['discountStartDate'].strftime('%Y-%m-%d %H:%M') if row['discountStartDate'] else None,
+                'discountEndDate': row['discountEndDate'].strftime('%Y-%m-%d %H:%M') if row['discountEndDate'] else None
+            })
 
-    return jsonify({'success': True, 'data': processed_events})
+    return jsonify({'success': True, 'data': list(processed_events.values())})
 
 
 # Run listener

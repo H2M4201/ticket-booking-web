@@ -27,8 +27,8 @@ def log():
     entry['timestamp'] = datetime.datetime.now()
     entry['msg'] = message
     log_collection.insert_one(entry)
-    with open('log.txt', 'w') as f:
-        f.write(entry['msg'] + ' at ' + entry['timestamp'].strftime("%Y-%m-%d"))
+    with open('log.txt', 'a') as f:
+        f.write(entry['msg'] + ' at ' + entry['timestamp'].strftime("%Y-%m-%d %H:%M:%S") + "\n")
     f.close()
     return jsonify({'success': True})
 

@@ -29,10 +29,11 @@ function Login({ onLogin }) {
 
                 try {
                     const response_log = await axios.post(`${config.logServiceUrl}/log`, {
-                        msg: formData.username += ' login successfully.'
+                        msg: formData.username + ' login successfully.'
                     });
                     if (response_log.status === 200) {
                         console.log('Login information saved successfully:', response_log.data);
+
                     } else {
                         console.error('Login information failed to be saved:', response_log);
                     }
@@ -41,13 +42,26 @@ function Login({ onLogin }) {
                 }
 
                 navigate('/');
-            } else {
-                console.error('Login failed:', response);
-                alert('login failed')
             }
+
         } catch (error) {
+
+            try {
+                const response_log = await axios.post(`${config.logServiceUrl}/log`, {
+                    msg: formData.username + ' login failed.'
+                });
+                if (response_log.status === 200) {
+                    console.log('Login information saved successfully:', response_log.data);
+
+                } else {
+                    console.error('Login information failed to be saved:', response_log);
+                }
+            } catch (error) {
+                console.error('There was an error while saving the login information:', error);
+            }
+
             console.error('There was an error during the login process:', error);
-            alert('login failed')
+            alert('login failed');
         }
     };
 

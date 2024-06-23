@@ -75,11 +75,6 @@ def submit_event():
     if not event_name or not event_end_date or not event_end_date \
         or not ticket_start_date or not ticket_end_date or not event_loc:
         error = 'Missing required field.'
-    elif (datetime.strptime(event_start_date, '%Y-%m-%d') < datetime.strptime(event_end_date, '%Y-%m-%d')) \
-        or (datetime.strptime(ticket_start_date, '%Y-%m-%d') < datetime.strptime(ticket_end_date, '%Y-%m-%d')) \
-        or (datetime.strptime(event_start_date, '%Y-%m-%d') < datetime.strptime(ticket_start_date, '%Y-%m-%d')) \
-        or (datetime.strptime(event_end_date, '%Y-%m-%d') < datetime.strptime(ticket_end_date, '%Y-%m-%d')):
-        error = 'Unappropriate time for events and ticket selling.'
    
     if error:
         return jsonify({'success': False, 'error': error}), 400
@@ -87,46 +82,46 @@ def submit_event():
     try:
         cursor = db_conn.cursor()
 
+        event_id = db.execute_query(
+          g.db,
+         'SELECT MAX(eventID) as latestID FROM Events'
+        ).fetchone()
+        event_id = event_id['latestID'] + 1
+        print(event_id)
+
         query = """
-        INSERT INTO Events (eventName, eventDescription, eventLocation, organizerID, startDate, endDate, 
+        INSERT INTO Events (eventID, eventName, eventDescription, eventLocation, organizerID, startDate, endDate, 
                             openForTicket, closeForTicket, eventStatus) 
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
-        cursor.execute(query, (event_name, event_desc, event_loc, user_id, event_start_date, event_end_date,
+        cursor.execute(query, (event_id, event_name, event_desc, event_loc, user_id, event_start_date, event_end_date,
                                 ticket_start_date, ticket_end_date, ''))
        
 
-        event_id = db.execute_query(
-          g.db,
-         'SELECT MAX(eventID) FROM Events'
-        ).fetchone()
-        print(event_id)
+        # tickets = json.loads(request.form['tickets'])
+        # print(tickets)
+        # for ticket in tickets:
+        #     ticket_total = ticket['ticket_total']
+        #     ticket_sold = 0
+        #     ticket_name = ticket['ticket_name']
+        #     ticket_price = ticket['ticket_price']
+
+        #     error = None
+
+        #     if not ticket_name or not ticket_price or not ticket_total \
+        #         or not ticket_start_date or not ticket_end_date or not ticket_total or not event_loc:
+        #         error = 'Missing required field.'
+        #     elif ticket_total < 0 or ticket_price < 0:
+        #         error = 'Unappropriate data values.'
         
+        #     if error:
+        #         return jsonify({'success': False, 'error': error}), 400
 
-        tickets = json.loads(request.form['tickets'])
-        print(tickets)
-        for ticket in tickets:
-            ticket_total = ticket['ticket_total']
-            ticket_sold = 0
-            ticket_name = ticket['ticket_name']
-            ticket_price = ticket['ticket_price']
-
-            error = None
-
-            if not ticket_name or not ticket_price or not ticket_total \
-                or not ticket_start_date or not ticket_end_date or not ticket_total or not event_loc:
-                error = 'Missing required field.'
-            elif ticket_total < 0 or ticket_price < 0:
-                error = 'Unappropriate data values.'
-        
-            if error:
-                return jsonify({'success': False, 'error': error}), 400
-
-            query = """
-            INSERT INTO Tickets (eventID, ticketType, price, total, sold) 
-            VALUES (%s, %s, %s, %s, %s)
-            """
-            cursor.execute(query, (event_id, ticket_total, ticket_sold, ticket_name, ticket_price))
+        #     query = """
+        #     INSERT INTO Tickets (eventID, ticketType, price, total, sold) 
+        #     VALUES (%s, %s, %s, %s, %s)
+        #     """
+        #     cursor.execute(query, (event_id, ticket_total, ticket_sold, ticket_name, ticket_price))
 
         db_conn.commit()
         return jsonify({'success': True, 'message': 'Event submitted successfully', 'eventID': 1}), 200

@@ -8,7 +8,7 @@ import os
 # Initialize Flask app
 app = Flask(__name__)
 app.config.from_mapping(SECRET_KEY='dev')
-CORS(app)  # Enable CORS
+CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}}) # Enable CORS
 
 client = MongoClient()
 db = client.auction_logs
@@ -24,9 +24,12 @@ def log():
     message = request.json['msg']
 
     entry = {}
-    entry['timestamp'] = datetime.datetime.utcnow()
+    entry['timestamp'] = datetime.datetime.now()
     entry['msg'] = message
     log_collection.insert_one(entry)
+    with open('log.txt', 'w') as f:
+        f.write(entry['msg'] + ' at ' + entry['timestamp'].strftime("%Y-%m-%d"))
+    f.close()
     return jsonify({'success': True})
 
 

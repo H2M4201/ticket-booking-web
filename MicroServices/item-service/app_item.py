@@ -97,34 +97,47 @@ def submit_event():
         cursor.execute(query, (event_id, event_name, event_desc, event_loc, user_id, event_start_date, event_end_date,
                                 ticket_start_date, ticket_end_date, ''))
        
+        form_data = request.form
+        tickets = []
+        ticket_indices = range(len(form_data.getlist('tickets[0][ticket_total]')))
+        for i in ticket_indices:
+            ticket = {
+                'ticket_total': int(form_data.get(f'tickets[{i}][ticket_total]')),
+                'ticket_name': form_data.get(f'tickets[{i}][ticket_name]'),
+                'ticket_price': float(form_data.get(f'tickets[{i}][ticket_price]'))
+            }
+            tickets.append(ticket)
 
-        # tickets = json.loads(request.form['tickets'])
-        # print(tickets)
-        # for ticket in tickets:
-        #     ticket_total = ticket['ticket_total']
-        #     ticket_sold = 0
-        #     ticket_name = ticket['ticket_name']
-        #     ticket_price = ticket['ticket_price']
+        # Process each ticket
+        event_loc = form_data.get('event_loc')
+        ticket_start_date = form_data.get('ticket_start_date')
+        ticket_end_date = form_data.get('ticket_end_date')
+        error = None
 
-        #     error = None
+        for ticket in tickets:
+            ticket_total = ticket['ticket_total']
+            ticket_sold = 0
+            ticket_name = ticket['ticket_name']
+            ticket_price = ticket['ticket_price']
 
-        #     if not ticket_name or not ticket_price or not ticket_total \
-        #         or not ticket_start_date or not ticket_end_date or not ticket_total or not event_loc:
-        #         error = 'Missing required field.'
-        #     elif ticket_total < 0 or ticket_price < 0:
-        #         error = 'Unappropriate data values.'
-        
-        #     if error:
-        #         return jsonify({'success': False, 'error': error}), 400
+            # Validate required fields
+            if not ticket_name or ticket_price is None or ticket_total is None or not ticket_start_date or not ticket_end_date or not event_loc:
+                error = 'Missing required field.'
+            elif ticket_total < 0 or ticket_price < 0:
+                error = 'Inappropriate data values.'
 
-        #     query = """
-        #     INSERT INTO Tickets (eventID, ticketType, price, total, sold) 
-        #     VALUES (%s, %s, %s, %s, %s)
-        #     """
-        #     cursor.execute(query, (event_id, ticket_total, ticket_sold, ticket_name, ticket_price))
+            if error:
+                return jsonify({'success': False, 'error': error}), 400
+
+            # Insert the ticket into the database
+            query = """
+            INSERT INTO Tickets (eventID, ticketType, price, total, sold) 
+            VALUES (%s, %s, %s, %s, %s)
+            """
+            cursor.execute(query, (event_id, ticket_name, ticket_price, ticket_total, ticket_sold))
 
         db_conn.commit()
-        return jsonify({'success': True, 'message': 'Event submitted successfully', 'eventID': 1}), 200
+        return jsonify({'success': True, 'message': 'Event submitted successfully', 'eventID': event_id}), 200
     except Exception as e:
         db_conn.rollback()
         return jsonify({'success': False, 'error': str(e)}), 500

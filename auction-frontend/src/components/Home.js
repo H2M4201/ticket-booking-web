@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import config from "../config";
+import BuyTicketModal from "./BuyTicketModal";
 
-function Listings() {
+function Listings({ user }) {
   const [events, setEvents] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredResults, setFilteredResults] = useState([]);
   const [hasResults, setHasResults] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState(null);
 
   useEffect(() => {
     // Fetch all events
@@ -37,6 +40,29 @@ function Listings() {
       setFilteredResults(filtered);
       setHasResults(filtered.length > 0);
     }
+  };
+
+  const handleBuyTicket = (event) => {
+    setSelectedEvent(event);
+    setShowModal(true);
+  };
+
+  const handleModalClose = () => {
+    setShowModal(false);
+    setSelectedEvent(null);
+  };
+
+  const handleModalSubmit = (data) => {
+    axios
+      .post(`${config.userServiceUrl}/add-checkout`, data)
+      .then((response) => {
+        console.log("Ticket purchased successfully", response);
+        alert("Ticket purchased successfully!");
+      })
+      .catch((error) => {
+        console.error("Error purchasing ticket", error);
+        alert("Error purchasing ticket. Please try again.");
+      });
   };
 
   return (
@@ -103,6 +129,11 @@ function Listings() {
                       </div>
                     ))}
                   </div>
+                  <div className="card-footer bg-transparent">
+                    <button className="btn btn-primary" onClick={() => handleBuyTicket(event)}>
+                      Buy Ticket
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -113,6 +144,15 @@ function Listings() {
           </div>
         )}
       </div>
+      {selectedEvent && (
+        <BuyTicketModal
+          show={showModal}
+          onHide={handleModalClose}
+          event={selectedEvent}
+          onSubmit={handleModalSubmit}
+          user={user}
+        />
+      )}
     </>
   );
 }

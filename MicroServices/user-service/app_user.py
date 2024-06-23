@@ -230,6 +230,36 @@ def reset_password():
 
     return jsonify({'success': True, 'message': 'Password changed successfully'}), 200
 
+@app.route('/add-checkout', methods=['POST'])
+def add_checkout():
+    data = request.json
+    user_id = data.get('userID')
+    event_id = data.get('eventID')
+    ticket_id = data.get('ticketID')
+    quantity = data.get('quantity')
+    discount_id = data.get('discountID')
+
+    if not user_id or not event_id or not ticket_id or not quantity:
+        return jsonify({'success': False, 'error': 'Missing required fields'}), 400
+
+    try:
+        purchase_date = datetime.now()
+        cursor = g.db.cursor()
+
+        # Insert checkout record
+        query = """
+        INSERT INTO Checkout (userID, eventID, ticketID, quantity, discountID, purchaseDate) 
+        VALUES (%s, %s, %s, %s, %s, %s)
+        """
+        cursor.execute(query, (user_id, event_id, ticket_id, quantity, discount_id or None, purchase_date))
+        g.db.commit()
+        cursor.close()
+    except Exception as e:
+        g.db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+    return jsonify({'success': True, 'message': 'Ticket purchased successfully'}), 201
+
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 9990))
     app.run(port=port, debug=True, host='0.0.0.0')

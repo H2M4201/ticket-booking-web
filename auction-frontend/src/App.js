@@ -35,7 +35,7 @@ function App() {
     <Router>
       <Navbar isLoggedIn={isLoggedIn} user={user} onLogout={handleLogout} />
       <Routes>
-        <Route path="/" element={<Listings />} />
+        <Route path="/" element={<Listings user={user}/>} />
         <Route path="/login" element={<Login onLogin={handleLogin} />} />
         <Route path="/register" element={<Register />} />
         <Route path="ChangePassword" element={<ChangePassword user={user} />} />

@@ -4,12 +4,27 @@ import config from "../config";
 import BuyTicketModal from "./BuyTicketModal";
 
 function Listings({ user }) {
+  const [userInfo, setUserInfo] = useState([]);
   const [events, setEvents] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredResults, setFilteredResults] = useState([]);
   const [hasResults, setHasResults] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
+
+  console.log({ userrr: user });
+
+  useEffect(() => {
+    if (!user || !user.id) return;
+    axios
+      .get(`${config.userServiceUrl}/user/${user.id}/profile`)
+      .then((response) => {
+        if (response.data.success) {
+          setUserInfo(response.data.data);
+        }
+      })
+      .catch((error) => console.log(error));
+  }, [user]);
 
   useEffect(() => {
     // Fetch all events
@@ -129,11 +144,13 @@ function Listings({ user }) {
                       </div>
                     ))}
                   </div>
-                  <div className="card-footer bg-transparent">
-                    <button className="btn btn-primary" onClick={() => handleBuyTicket(event)}>
-                      Buy Ticket
-                    </button>
-                  </div>
+                  {userInfo.isGuest ? (
+                    <div className="card-footer bg-transparent">
+                      <button className="btn btn-primary" onClick={() => handleBuyTicket(event)}>
+                        Buy Ticket
+                      </button>
+                    </div>
+                  ) : null}
                 </div>
               </div>
             ))}

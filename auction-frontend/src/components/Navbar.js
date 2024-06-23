@@ -56,9 +56,6 @@ function CustomNavbar({ isLoggedIn, user, onLogout }) {
                 </LinkContainer>
                 {userInfo.isGuest ? (
                   <>
-                    <LinkContainer to="/buy-ticket">
-                      <NavDropdown.Item>Buy Ticket</NavDropdown.Item>
-                    </LinkContainer>
                     <LinkContainer to="/cart">
                       <NavDropdown.Item>Cart</NavDropdown.Item>
                     </LinkContainer>

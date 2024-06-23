@@ -1,37 +1,63 @@
 import React, { useState, useEffect } from "react";
+import axios from "axios";
+import config from "../config"; // Ensure this file contains the URL for your backend API
 
-const CartPage = () => {
+const CartPage = ({ user }) => {
   const [cartItems, setCartItems] = useState([]);
+  const [totalPrice, setTotalPrice] = useState(0);
+  const [totalQuantity, setTotalQuantity] = useState(0);
 
   useEffect(() => {
-    // Dummy data for cart items
-    const dummyCartItems = [
-      {
-        shoppingcartRecordID: 1,
-        name: "Worlds 2024 Ticket",
-        description: "Ticket for League of Legends finals in Beijing.",
-        endDate: "2024-11-23",
-        dealPrice: 150.0,
-        shippingCosts: 10.0,
-        quantity: 1
-      },
-      {
-        shoppingcartRecordID: 2,
-        name: "World Cup 2022 Ticket",
-        description: "Ticket for World Cup 2022 in Qatar.",
-        endDate: "2022-12-18",
-        dealPrice: 300.0,
-        shippingCosts: 15.0,
-        quantity: 2
-      }
-    ];
+    axios
+      .get(`${config.userServiceUrl}/get-checkout?user_id=${user.id || 0}`)
+      .then((response) => {
+        if (response.data.success) {
+          setCartItems(response.data.data);
+        } else {
+          console.error("Failed to fetch cart items:", response.data.error);
+        }
+      })
+      .catch((error) => {
+        console.error("There was an error fetching the cart items!", error);
+      });
+  }, [user.id]);
 
-    setCartItems(dummyCartItems);
-  }, []);
+  useEffect(() => {
+    // Calculate total price and quantity whenever cart items change
+    const calculateTotals = () => {
+      let totalPrice = 0;
+      let totalQuantity = 0;
+
+      cartItems.forEach((item) => {
+        totalPrice += item.paidPrice;
+        totalQuantity += item.quantity;
+      });
+
+      setTotalPrice(totalPrice);
+      setTotalQuantity(totalQuantity);
+    };
+
+    calculateTotals();
+  }, [cartItems]);
 
   const handleCheckout = () => {
-    alert("Checkout successful! Dummy checkout process completed.");
-    setCartItems([]); // Clear cart after successful checkout
+    axios
+      .post(`${config.userServiceUrl}/checkout`, { user_id: user.id })
+      .then((response) => {
+        if (response.data.success) {
+          alert("Checkout successful!");
+          setCartItems([]); // Clear cart after successful checkout
+          setTotalPrice(0);
+          setTotalQuantity(0);
+        } else {
+          console.error("Failed to checkout:", response.data.error);
+          alert("Checkout failed!");
+        }
+      })
+      .catch((error) => {
+        console.error("There was an error during checkout!", error);
+        alert("Checkout failed!");
+      });
   };
 
   return (
@@ -48,7 +74,7 @@ const CartPage = () => {
           </div>
         ) : (
           cartItems.map((item) => (
-            <div key={item.shoppingcartRecordID} className="col-12 mb-3">
+            <div key={item.checkoutID} className="col-12 mb-3">
               <div className="card">
                 <div className="card-body">
                   <h5 className="card-title">{item.name}</h5>
@@ -57,10 +83,13 @@ const CartPage = () => {
                     <strong>End Date:</strong> {item.endDate}
                   </p>
                   <p className="card-text">
-                    <strong>Deal Price:</strong> ${item.dealPrice}
+                    <strong>Deal Price:</strong> ${item.dealPrice.toFixed(2)}
                   </p>
                   <p className="card-text">
-                    <strong>Shipping Costs:</strong> ${item.shippingCosts}
+                    <strong>Discount:</strong> {item.discountPercent}%
+                  </p>
+                  <p className="card-text">
+                    <strong>Paid Price:</strong> ${item.paidPrice.toFixed(2)}
                   </p>
                   <p className="card-text">
                     <strong>Quantity:</strong> {item.quantity}
@@ -72,13 +101,21 @@ const CartPage = () => {
         )}
       </div>
       {cartItems.length > 0 && (
-        <div className="row mt-2">
-          <div className="col">
-            <button className="btn btn-primary" onClick={handleCheckout}>
-              Proceed to Checkout
-            </button>
+        <>
+          <div className="row mt-2">
+            <div className="col">
+              <h4>Total Quantity: {totalQuantity}</h4>
+              <h4>Total Price: ${totalPrice.toFixed(2)}</h4>
+            </div>
           </div>
-        </div>
+          <div className="row mt-2">
+            <div className="col">
+              <button className="btn btn-primary" onClick={handleCheckout}>
+                Proceed to Checkout
+              </button>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );

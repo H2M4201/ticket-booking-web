@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify, g
 from flask_cors import CORS
 import os
+import pymysql
 import database.db_connector as db
 from datetime import date, datetime
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -259,6 +260,60 @@ def add_checkout():
         return jsonify({'success': False, 'error': str(e)}), 500
 
     return jsonify({'success': True, 'message': 'Ticket purchased successfully'}), 201
+
+
+@app.route('/get-checkout', methods=['GET'])
+def get_checkout():
+    user_id = request.args.get('user_id')
+
+    if not user_id:
+        return jsonify({'success': False, 'error': 'Missing user_id'}), 400
+
+    try:
+        # Use DictCursor to get results as dictionaries
+        cursor = g.db.cursor(pymysql.cursors.DictCursor)
+        query = """
+        SELECT 
+            C.checkoutID, 
+            E.eventName AS name, 
+            E.eventDescription AS description, 
+            E.endDate, 
+            T.price AS dealPrice, 
+            C.quantity,
+            COALESCE(D.discountPercent, 0) AS discountPercent
+        FROM 
+            Checkout C
+        JOIN 
+            Events E ON C.eventID = E.eventID
+        JOIN 
+            Tickets T ON C.ticketID = T.ticketID
+        LEFT JOIN
+            Discounts D ON C.discountID = D.discountID
+        WHERE 
+            C.userID = %s
+        """
+        cursor.execute(query, (user_id,))
+        cart_items = cursor.fetchall()
+        cursor.close()
+
+        processed_cart_items = []
+        for item in cart_items:
+            processed_item = {}
+            for key, value in item.items():
+                if isinstance(value, Decimal):
+                    processed_item[key] = float(value)  # Convert Decimal to float
+                elif isinstance(value, datetime):
+                    processed_item[key] = value.strftime('%Y-%m-%d %H:%M')
+                else:
+                    processed_item[key] = value
+            processed_item["paidPrice"] = processed_item['dealPrice'] * processed_item['quantity'] * (1 - min(100, max(0, processed_item['discountPercent'])) / 100)
+            processed_cart_items.append(processed_item)
+
+        return jsonify({'success': True, 'data': processed_cart_items}), 200
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 9990))

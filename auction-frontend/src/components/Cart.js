@@ -42,10 +42,10 @@ const CartPage = ({ user }) => {
 
   const handleCheckout = () => {
     axios
-      .post(`${config.userServiceUrl}/checkout`, { user_id: user.id })
+      .post(`${config.userServiceUrl}/paid-checkout`, { userID: user.id })
       .then((response) => {
         if (response.data.success) {
-          alert("Checkout successful!");
+          alert(`Checkout successful! Total price: $${response.data.totalPrice.toFixed(2)}`);
           setCartItems([]); // Clear cart after successful checkout
           setTotalPrice(0);
           setTotalQuantity(0);

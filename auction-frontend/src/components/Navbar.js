@@ -59,6 +59,9 @@ function CustomNavbar({ isLoggedIn, user, onLogout }) {
                     <LinkContainer to="/cart">
                       <NavDropdown.Item>Cart</NavDropdown.Item>
                     </LinkContainer>
+                    <LinkContainer to="/paid-ticket">
+                      <NavDropdown.Item>Paid Ticket</NavDropdown.Item>
+                    </LinkContainer>
                   </>
                 ) : (
                   <>

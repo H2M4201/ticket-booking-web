@@ -143,6 +143,22 @@ function Listings({ user }) {
                         )}
                       </div>
                     ))}
+                    <h6>Average Rating</h6>
+                    <p className="card-subtitle mb-2 text-muted">
+                      {event.avgRating ? `${event.avgRating.toFixed(1)} stars` : "No reviews yet"}
+                    </p>
+                    <h6>Latest Reviews</h6>
+                    {event.reviews && event.reviews.length > 0 ? (
+                      event.reviews.map((review, index) => (
+                        <div key={index}>
+                          <p className="card-subtitle mb-2 text-muted">Rating: {review.rating}</p>
+                          <p className="card-subtitle mb-2 text-muted">Comment: {review.comment}</p>
+                          <p className="card-subtitle mb-2 text-muted">Date: {formatDate(review.reviewDate)}</p>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="card-subtitle mb-2 text-muted">No reviews available</p>
+                    )}
                   </div>
                   {userInfo.isGuest ? (
                     <div className="card-footer bg-transparent">

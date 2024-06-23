@@ -40,7 +40,8 @@ CREATE TABLE Checkout (
     ticketID INT(11) NOT NULL,
     quantity INT(11) NOT NULL,
     discountID INT(11),
-    purchaseDate DATETIME NOT NULL,
+    checkoutDate DATETIME NOT NULL,
+    paid BOOLEAN DEFAULT FALSE,
     PRIMARY KEY (checkoutID),
     FOREIGN KEY (userID) REFERENCES Users(userID),
     FOREIGN KEY (eventID) REFERENCES Events(eventID),
@@ -138,3 +139,17 @@ CREATE TABLE Discounts (
 
 INSERT INTO Discounts (ticketID, discountName, discountPercent, discountDescription, discountStartDate, discountEndDate) 
     VALUES (1, 'Early Bird', 10.00, '10% off for early bookings', '2022-01-01', '2022-01-31');
+
+CREATE TABLE Reviews (
+    reviewID INT(11) UNIQUE NOT NULL AUTO_INCREMENT,
+    userID INT(11) NOT NULL,
+    eventID INT(11) NOT NULL,
+    ticketID INT(11) NOT NULL,
+    rating INT(1) NOT NULL CHECK (rating BETWEEN 1 AND 5),
+    comment TEXT,
+    reviewDate DATETIME NOT NULL,
+    PRIMARY KEY (reviewID),
+    FOREIGN KEY (userID) REFERENCES Users(userID),
+    FOREIGN KEY (eventID) REFERENCES Events(eventID),
+    FOREIGN KEY (ticketID) REFERENCES Tickets(ticketID)
+);

@@ -249,7 +249,7 @@ def add_checkout():
 
         # Insert checkout record
         query = """
-        INSERT INTO Checkout (userID, eventID, ticketID, quantity, discountID, purchaseDate) 
+        INSERT INTO Checkout (userID, eventID, ticketID, quantity, discountID, checkoutDate) 
         VALUES (%s, %s, %s, %s, %s, %s)
         """
         cursor.execute(query, (user_id, event_id, ticket_id, quantity, discount_id or None, purchase_date))
@@ -290,7 +290,7 @@ def get_checkout():
         LEFT JOIN
             Discounts D ON C.discountID = D.discountID
         WHERE 
-            C.userID = %s
+            C.userID = %s AND C.paid = FALSE
         """
         cursor.execute(query, (user_id,))
         cart_items = cursor.fetchall()
@@ -310,6 +310,207 @@ def get_checkout():
             processed_cart_items.append(processed_item)
 
         return jsonify({'success': True, 'data': processed_cart_items}), 200
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/paid-checkout', methods=['POST'])
+def paid_checkout():
+    data = request.json
+    user_id = data.get('userID')
+
+    if not user_id:
+        return jsonify({'success': False, 'error': 'Missing user_id'}), 400
+
+    try:
+        cursor = g.db.cursor(pymysql.cursors.DictCursor)
+        
+        # Get all unpaid items in the user's cart
+        query = """
+        SELECT 
+            C.checkoutID,
+            C.eventID,
+            C.ticketID,
+            C.quantity,
+            C.discountID,
+            T.price AS dealPrice,
+            COALESCE(D.discountPercent, 0) AS discountPercent
+        FROM 
+            Checkout C
+        JOIN 
+            Tickets T ON C.ticketID = T.ticketID
+        LEFT JOIN
+            Discounts D ON C.discountID = D.discountID
+        WHERE 
+            C.userID = %s AND C.paid = FALSE
+        """
+        cursor.execute(query, (user_id,))
+        cart_items = cursor.fetchall()
+
+        # Calculate total price
+        total_price = 0
+        for item in cart_items:
+            deal_price = float(item['dealPrice'])
+            discount_percent = float(item['discountPercent'])
+            quantity = item['quantity']
+            paid_price = deal_price * quantity * (1 - min(100, max(0, discount_percent)) / 100)
+            total_price += paid_price
+
+        # Here you would handle the payment processing with your payment gateway
+        
+        # If payment is successful, mark the items as paid
+        mark_paid_query = "UPDATE Checkout SET paid = TRUE, checkoutDate = %s WHERE userID = %s AND paid = FALSE"
+        cursor.execute(mark_paid_query, (datetime.now(), user_id))
+        g.db.commit()
+        cursor.close()
+
+        return jsonify({'success': True, 'message': 'Checkout completed successfully', 'totalPrice': total_price}), 200
+
+    except Exception as e:
+        g.db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/get-paid-tickets', methods=['GET'])
+def get_paid_tickets():
+    user_id = request.args.get('user_id')
+
+    if not user_id:
+        return jsonify({'success': False, 'error': 'Missing user_id'}), 400
+
+    try:
+        cursor = g.db.cursor(pymysql.cursors.DictCursor)
+        query = """
+        SELECT 
+            C.checkoutID, 
+            E.eventName AS name, 
+            E.eventDescription AS description, 
+            E.endDate, 
+            T.price AS dealPrice, 
+            C.quantity,
+            COALESCE(D.discountPercent, 0) AS discountPercent,
+            C.checkoutDate
+        FROM 
+            Checkout C
+        JOIN 
+            Events E ON C.eventID = E.eventID
+        JOIN 
+            Tickets T ON C.ticketID = T.ticketID
+        LEFT JOIN
+            Discounts D ON C.discountID = D.discountID
+        WHERE 
+            C.userID = %s AND C.paid = TRUE
+        """
+        cursor.execute(query, (user_id,))
+        paid_tickets = cursor.fetchall()
+        cursor.close()
+
+        processed_tickets = []
+        for item in paid_tickets:
+            processed_item = {}
+            for key, value in item.items():
+                if isinstance(value, Decimal):
+                    processed_item[key] = float(value)  # Convert Decimal to float
+                elif isinstance(value, datetime):
+                    processed_item[key] = value.strftime('%Y-%m-%d %H:%M')
+                else:
+                    processed_item[key] = value
+            processed_item["paidPrice"] = processed_item['dealPrice'] * processed_item['quantity'] * (1 - min(100, max(0, processed_item['discountPercent'])) / 100)
+            processed_tickets.append(processed_item)
+
+        return jsonify({'success': True, 'data': processed_tickets}), 200
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/add-review', methods=['POST'])
+def add_review():
+    data = request.json
+    user_id = data.get('userID')
+    checkout_id = data.get('checkoutID')
+    rating = data.get('rating')
+    comment = data.get('comment', '')
+
+    if not user_id or not checkout_id or not rating:
+        return jsonify({'success': False, 'error': 'Missing required fields'}), 400
+
+    try:
+        review_date = datetime.now()
+        cursor = g.db.cursor(pymysql.cursors.DictCursor)
+        
+        # Get eventID and ticketID from Checkout table
+        event_id_query = "SELECT eventID, ticketID FROM Checkout WHERE checkoutID = %s"
+        cursor.execute(event_id_query, (checkout_id,))
+        result = cursor.fetchone()
+        
+        if result is None:
+            return jsonify({'success': False, 'error': 'Invalid checkoutID'}), 400
+
+        event_id = result['eventID']
+        ticket_id = result['ticketID']
+
+        # Insert review into Reviews table
+        query = """
+        INSERT INTO Reviews (userID, eventID, ticketID, rating, comment, reviewDate) 
+        VALUES (%s, %s, %s, %s, %s, %s)
+        """
+        cursor.execute(query, (user_id, event_id, ticket_id, rating, comment, review_date))
+        g.db.commit()
+        cursor.close()
+        return jsonify({'success': True, 'message': 'Review added successfully'}), 201
+
+    except Exception as e:
+        g.db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+
+@app.route('/get-reviews', methods=['GET'])
+def get_reviews():
+    user_id = request.args.get('user_id')
+
+    if not user_id:
+        return jsonify({'success': False, 'error': 'Missing user_id'}), 400
+
+    try:
+        cursor = g.db.cursor(pymysql.cursors.DictCursor)
+        query = """
+        SELECT 
+            R.reviewID,
+            R.eventID,
+            R.ticketID,
+            R.rating,
+            R.comment,
+            R.reviewDate,
+            E.eventName AS eventName,
+            T.ticketType AS ticketType
+        FROM 
+            Reviews R
+        JOIN 
+            Events E ON R.eventID = E.eventID
+        JOIN 
+            Tickets T ON R.ticketID = T.ticketID
+        WHERE 
+            R.userID = %s
+        """
+        cursor.execute(query, (user_id,))
+        reviews = cursor.fetchall()
+        cursor.close()
+
+        processed_reviews = []
+        for item in reviews:
+            processed_item = {}
+            for key, value in item.items():
+                if isinstance(value, Decimal):
+                    processed_item[key] = float(value)  # Convert Decimal to float
+                elif isinstance(value, datetime):
+                    processed_item[key] = value.strftime('%Y-%m-%d %H:%M')
+                else:
+                    processed_item[key] = value
+            processed_reviews.append(processed_item)
+
+        return jsonify({'success': True, 'data': processed_reviews}), 200
 
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500

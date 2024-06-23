@@ -223,22 +223,27 @@ def get_events():
         D.discountPercent,
         D.discountDescription,
         D.discountStartDate,
-        D.discountEndDate
+        D.discountEndDate,
+        AVG(R.rating) AS avgRating
     FROM 
         Events E
     LEFT JOIN 
         Tickets T ON E.eventID = T.eventID
     LEFT JOIN 
         Discounts D ON T.ticketID = D.ticketID
+    LEFT JOIN 
+        Reviews R ON E.eventID = R.eventID
+    GROUP BY 
+        E.eventID, T.ticketID, D.discountID
     """
 
     events = db.execute_query(db_connection=db_conn, query=query).fetchall()
     processed_events = {}
-    
+
     for row in events:
         event_id = row['eventID']
         ticket_id = row['ticketID']
-        
+
         if event_id not in processed_events:
             processed_events[event_id] = {
                 'eventID': row['eventID'],
@@ -251,9 +256,11 @@ def get_events():
                 'openForTicket': row['openForTicket'].strftime('%Y-%m-%d %H:%M') if row['openForTicket'] else None,
                 'closeForTicket': row['closeForTicket'].strftime('%Y-%m-%d %H:%M') if row['closeForTicket'] else None,
                 'eventStatus': row['eventStatus'],
-                'tickets': {}
+                'avgRating': float(row['avgRating']) if row['avgRating'] is not None else None,
+                'tickets': {},
+                'reviews': []
             }
-        
+
         if ticket_id not in processed_events[event_id]['tickets']:
             processed_events[event_id]['tickets'][ticket_id] = {
                 'ticketID': row['ticketID'],
@@ -263,7 +270,7 @@ def get_events():
                 'sold': row['sold'],
                 'discounts': []
             }
-        
+
         if row['discountID']:
             processed_events[event_id]['tickets'][ticket_id]['discounts'].append({
                 'discountID': row['discountID'],
@@ -272,6 +279,30 @@ def get_events():
                 'discountDescription': row['discountDescription'],
                 'discountStartDate': row['discountStartDate'].strftime('%Y-%m-%d %H:%M') if row['discountStartDate'] else None,
                 'discountEndDate': row['discountEndDate'].strftime('%Y-%m-%d %H:%M') if row['discountEndDate'] else None
+            })
+
+    # Fetch latest reviews
+    review_query = """
+    SELECT 
+        R.eventID,
+        R.rating,
+        R.comment,
+        R.reviewDate
+    FROM 
+        Reviews R
+    ORDER BY 
+        R.reviewDate DESC
+    """
+
+    reviews = db.execute_query(db_connection=db_conn, query=review_query).fetchall()
+
+    for review in reviews:
+        event_id = review['eventID']
+        if event_id in processed_events and len(processed_events[event_id]['reviews']) < 3:
+            processed_events[event_id]['reviews'].append({
+                'rating': review['rating'],
+                'comment': review['comment'],
+                'reviewDate': review['reviewDate'].strftime('%Y-%m-%d %H:%M') if review['reviewDate'] else None
             })
 
     return jsonify({'success': True, 'data': list(processed_events.values())})

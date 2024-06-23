@@ -111,29 +111,19 @@ CREATE TABLE Feedbacks (
 INSERT INTO Feedbacks (userID, eventID, feedbackContent, feedbackType, rating, repsonseTo) VALUES (3, 1, 'Good', 'rating', 8.8, NULL);
 INSERT INTO Feedbacks (userID, eventID, feedbackContent, feedbackType, rating, repsonseTo) VALUES (2, 1, 'Okay', 'rating', 6.8, NULL);
 
+DROP TABLE IF EXISTS Discounts;
 
-
-CREATE TABLE DiscountList (
+CREATE TABLE Discounts (
     discountID INT(11) UNIQUE NOT NULL AUTO_INCREMENT,
-    name VARCHAR(255) NOT NULL,
-    description VARCHAR(255) NOT NULL,
-    startDate DATE NOT NULL,
-    endDate DATE NOT NULL,
-    discountPercentage DECIMAL(5,2) NOT NULL,
-    imageUrl VARCHAR(255) NOT NULL,
-    PRIMARY KEY (discountID)
+    ticketID INT(11) NOT NULL,
+    discountName VARCHAR(255),
+    discountPercent DECIMAL(5, 2),
+    discountDescription TEXT,
+    discountStartDate DATETIME,
+    discountEndDate DATETIME,
+    PRIMARY KEY (discountID),
+    FOREIGN KEY (ticketID) REFERENCES Tickets(ticketID)
 );
 
-INSERT INTO DiscountList (name, description, startDate, endDate, discountPercentage, imageUrl) VALUES
-    ('Concert A', '50% discount on Concert ABC tickets.', '2024-06-01', '2024-06-30', 50.00, 'https://www.eventbrite.ie/blog/wp-content/uploads/2022/06/special-offers-1.jpg'),
-    ('Play XYZ', '30% discount on Play XYZ tickets.', '2024-06-11', '2024-07-15', 30.00, 'https://cdn4.vectorstock.com/i/1000x1000/30/58/banner-super-discount-special-offer-ribbon-vector-19773058.jpg'),
-    ('Concert B', '40% discount on Concert B tickets.', '2024-07-01', '2024-07-31', 40.00, 'https://img.pikbest.com/origin/06/13/64/688pIkbEsTCDu.jpg!w700wp'),
-    ('Play ABC', '25% discount on Play ABC tickets.', '2024-02-05', '2024-08-10', 25.00, 'https://cdn3.vectorstock.com/i/1000x1000/53/87/modern-event-banner-template-with-degrade-vector-44785387.jpg'),
-    ('Musical XYZ', '20% discount on Musical XYZ tickets.', '2024-02-15', '2024-08-15', 20.00, 'https://www.shutterstock.com/shutterstock/photos/1556325578/display_1500/stock-vector-event-background-banner-design-illustration-for-music-performance-festival-party-and-concert-1556325578.jpg'),
-    ('Festival A', '15% discount on Festival A tickets.', '2024-03-20', '2024-08-30', 15.00, 'https://img.freepik.com/free-vector/gradient-electronic-music-festival-twitter-header-template_23-2149928189.jpg'),
-    ('Exhibition B', '30% discount on Exhibition B tickets.', '2024-03-01', '2024-08-31', 30.00, 'https://img.freepik.com/free-vector/gradient-electronic-music-festival-twitter-header-template_23-2149928189.jpg'),
-    ('Dance Show C', '25% discount on Dance Show C tickets.', '2024-04-05', '2024-09-10', 25.00, 'https://img.freepik.com/free-vector/gradient-electronic-music-festival-twitter-header-template_23-2149928189.jpg'),
-    ('Opera D', '35% discount on Opera D tickets.', '2024-08-10', '2024-04-15', 35.00, 'https://img.freepik.com/free-vector/gradient-electronic-music-festival-twitter-header-template_23-2149928189.jpg'),
-    ('Film Festival', '20% discount on Film Festival tickets.', '2024-05-15', '2024-09-30', 20.00, 'https://img.freepik.com/free-vector/gradient-electronic-music-festival-twitter-header-template_23-2149928189.jpg'),
-    ('Comedy Night', '30% discount on Comedy Night tickets.', '2024-05-20', '2024-10-05', 30.00, 'https://img.freepik.com/free-vector/gradient-electronic-music-festival-twitter-header-template_23-2149928189.jpg'),
-    ('Art Gallery Exhibit', '15% discount on Art Gallery Exhibit tickets.', '2024-05-25', '2024-10-15', 15.00, 'https://img.freepik.com/free-vector/gradient-electronic-music-festival-twitter-header-template_23-2149928189.jpg');
+INSERT INTO Discounts (ticketID, discountName, discountPercent, discountDescription, discountStartDate, discountEndDate) 
+    VALUES (1, 'Early Bird', 10.00, '10% off for early bookings', '2022-01-01', '2022-01-31');

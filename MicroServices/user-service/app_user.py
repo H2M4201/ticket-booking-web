@@ -183,6 +183,53 @@ def change_password(user_id):
 
     return jsonify({'success': True, 'message': 'Password changed successfully'}), 200
 
+
+
+@app.route('/ResetPassword', methods=['POST'])
+def reset_password():
+    data = request.json
+    username = data.get('username')
+    new_pwd = data.get('new_pwd')
+    confirm_pwd = data.get('confirm_pwd')
+
+    user = db.execute_query(
+        g.db,
+        'SELECT * FROM Users WHERE userName = %s', (username)
+    ).fetchone()
+
+    error = None
+    if not username:
+        error = 'Username required.'
+    elif not new_pwd:
+        error = 'New password required!!'
+    elif not confirm_pwd:
+        error = 'Please confirm your new password!!'
+    elif db.execute_query(
+        g.db,
+        'SELECT userID FROM Users WHERE userName = %s', (username)
+    ).fetchone() is None:
+        error = 'User not existed!'
+    elif new_pwd != confirm_pwd:
+        error = 'New Passwords do not match.'
+
+    if error:
+        return jsonify({'success': False, 'error': error}), 400
+
+    hashed_password = generate_password_hash(new_pwd, method='pbkdf2:sha256')
+
+    try:
+        cursor = g.db.cursor()
+        cursor.execute(
+            'UPDATE Users SET password = %s WHERE userName = %s', (hashed_password, username)
+        )
+        g.db.commit()
+        cursor.close()
+    except Exception as e:
+        g.db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+    return jsonify({'success': True, 'message': 'Password changed successfully'}), 200
+
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 9990))
     app.run(port=port, debug=True, host='0.0.0.0')

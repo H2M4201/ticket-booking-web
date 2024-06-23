@@ -15,11 +15,15 @@ import SubmitEventForm from "./components/SubmitEvent";
 import BuyTicket from "./components/BuyTicket";
 import Cart from "./components/Cart";
 import SubmitDiscountForm from "./components/SubmitDiscount";
+import ResetPassword from "./components/ResetPassword";
 
 function App() {
   const [user, setUser] = useLocalStorage("user", null);
   const isLoggedIn = useMemo(() => !!user, [user]);
   const handleLogin = (userData) => {
+    setUser(userData.user);
+  };
+  const handleReset = (userData) => {
     setUser(userData.user);
   };
 
@@ -35,6 +39,7 @@ function App() {
         <Route path="/login" element={<Login onLogin={handleLogin} />} />
         <Route path="/register" element={<Register />} />
         <Route path="ChangePassword" element={<ChangePassword user={user} />} />
+        <Route path="ResetPassword" element={<ResetPassword onReset={handleReset} />} />
         <Route path="/profile" element={<Profile user={user} />} />
         <Route path="/submit-listing" element={<SubmitListingForm />} />
         <Route path="/submit-event" element={<SubmitEventForm user={user} />} />

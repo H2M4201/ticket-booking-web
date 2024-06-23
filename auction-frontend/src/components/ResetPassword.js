@@ -3,10 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import config from "../config";
 
-function Login({ onLogin }) {
+function ResetPassword({ onReset }) {
     const [formData, setFormData] = useState({
         username: '',
-        password: ''
+        new_pwd: '',
+        confirm_pwd: ''
     });
     const navigate = useNavigate();
 
@@ -18,36 +19,37 @@ function Login({ onLogin }) {
         e.preventDefault();
 
         try {
-            const response = await axios.post(`${config.userServiceUrl}/login`, {
+            const response = await axios.post(`${config.userServiceUrl}/ResetPassword`, {
                 username: formData.username,
-                password: formData.password
+                new_pwd: formData.new_pwd,
+                confirm_pwd: formData.confirm_pwd
             });
 
             if (response.status === 200) {
-                console.log('Login successful:', response.data);
-                onLogin(response.data);
+                console.log('Password reset successfully!!:', response.data);
+                onReset(response.data);
 
                 try {
                     const response_log = await axios.post(`${config.logServiceUrl}/log`, {
-                        msg: formData.username += ' login successfully.'
+                        msg: formData.username += ' password reset successfully.'
                     });
                     if (response_log.status === 200) {
-                        console.log('Login information saved successfully:', response_log.data);
+                        console.log('Password reset information saved successfully:', response_log.data);
                     } else {
-                        console.error('Login information failed to be saved:', response_log);
+                        console.error('Password reset information failed to be saved:', response_log);
                     }
                 } catch (error) {
-                    console.error('There was an error while saving the login information:', error);
+                    console.error('There was an error while saving the password reset information:', error);
                 }
 
                 navigate('/');
             } else {
-                console.error('Login failed:', response);
-                alert('login failed')
+                console.error('Password reset failed:', response);
+                alert('Password reset failed')
             }
         } catch (error) {
-            console.error('There was an error during the login process:', error);
-            alert('login failed')
+            console.error('There was an error during the password reset process:', error);
+            alert('Password reset failed')
         }
     };
 
@@ -56,7 +58,7 @@ function Login({ onLogin }) {
             <div className='container pt-5'>
                 <div className="row mt-2">
                     <div className="col">
-                        <h2>Welcome Back to JavaSavesUs Auctions!</h2>
+                        <h2>Reset Password</h2>
                     </div>
                 </div>
                 <form onSubmit={handleSubmit}>
@@ -68,25 +70,25 @@ function Login({ onLogin }) {
                     </div>
                     <div className='row mt-4'>
                         <div className="col-4">
-                            <label htmlFor='password' className="form-label">Password</label>
-                            <input type='password' className="form-control" name='password' value={formData.password} onChange={handleChange} required />
+                            <label htmlFor='new_pwd' className="form-label">New Password</label>
+                            <input type='password' className="form-control" name='new_pwd' value={formData.new_pwd} onChange={handleChange} required />
+                        </div>
+                    </div>
+                    <div className='row mt-4'>
+                        <div className="col-4">
+                            <label htmlFor='confirm_pwd' className="form-label">Confirm Password</label>
+                            <input type='password' className="form-control" name='confirm_pwd' value={formData.confirm_pwd} onChange={handleChange} required />
                         </div>
                     </div>
                     <div className='row my-4'>
                         <div className="col-4">
-                            <button type="submit" className="btn btn-danger">Log In</button>
-                            <button className="btn btn-secondary" onClick={() => navigate('/register')}>I don't have a account?</button>
+                            <button type="submit" className="btn btn-danger">Reset Password</button>
                         </div>
                     </div>
                 </form>
-                <div className='row my-4'>
-                        <div className="col-4">
-                            <button type="submit" className="btn btn-secondary" onClick={() => navigate('/ResetPassword')}>Forget Password</button>
-                        </div>
-                    </div>
             </div>
         </>
     );
 }
 
-export default Login;
+export default ResetPassword;

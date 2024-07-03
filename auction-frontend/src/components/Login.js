@@ -70,7 +70,7 @@ function Login({ onLogin }) {
             <div className='container pt-5'>
                 <div className="row mt-2">
                     <div className="col">
-                        <h2>Welcome Back to JavaSavesUs Auctions!</h2>
+                        <h2>Welcome Back to Ticket Booking System!</h2>
                     </div>
                 </div>
                 <form onSubmit={handleSubmit}>

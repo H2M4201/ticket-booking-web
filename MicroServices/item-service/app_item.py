@@ -1,6 +1,7 @@
 import uuid
 import requests
 from flask import Flask, request, jsonify, g
+from time import strftime, strptime
 from flask_cors import CORS
 from decimal import Decimal, InvalidOperation, ROUND_DOWN
 from datetime import datetime
@@ -198,7 +199,7 @@ def update_event():
 
 
 @app.route('/get-events', methods=['GET'])
-def get_events():
+def get_active_events():
     db_conn = db.connect_to_database()
 
     query = """
@@ -235,6 +236,8 @@ def get_events():
         Reviews R ON E.eventID = R.eventID
     GROUP BY 
         E.eventID, T.ticketID, D.discountID
+    HAVING
+        E.endDate > NOW()
     """
 
     events = db.execute_query(db_connection=db_conn, query=query).fetchall()
@@ -306,6 +309,164 @@ def get_events():
             })
 
     return jsonify({'success': True, 'data': list(processed_events.values())})
+
+@app.route('/event/<int:event_id>', methods=['GET'])
+def get_event_detail(event_id):
+    db_conn = db.connect_to_database()
+
+    query = """
+    SELECT 
+        E.eventID, 
+        E.eventName, 
+        E.eventDescription, 
+        E.eventLocation, 
+        E.organizerID, 
+        E.startDate, 
+        E.endDate, 
+        E.openForTicket, 
+        E.closeForTicket, 
+        E.eventStatus,
+        T.ticketID,
+        T.ticketType,
+        T.price,
+        T.total,
+        T.sold,
+        D.discountID,
+        D.discountName,
+        D.discountPercent,
+        D.discountDescription,
+        D.discountStartDate,
+        D.discountEndDate,
+        AVG(R.rating) AS avgRating
+    FROM 
+        Events E
+    WHERE E.eventID = %s
+    LEFT JOIN 
+        Tickets T ON E.eventID = T.eventID
+    LEFT JOIN 
+        Discounts D ON T.ticketID = D.ticketID
+    LEFT JOIN 
+        Reviews R ON E.eventID = R.eventID
+    GROUP BY 
+        E.eventID, T.ticketID, D.discountID
+    """, (event_id)
+
+    events = db.execute_query(db_connection=db_conn, query=query).fetchall()
+    processed_events = {}
+
+    for row in events:
+        event_id = row['eventID']
+        ticket_id = row['ticketID']
+
+        if event_id not in processed_events:
+            processed_events[event_id] = {
+                'eventID': row['eventID'],
+                'eventName': row['eventName'],
+                'eventDescription': row['eventDescription'],
+                'eventLocation': row['eventLocation'],
+                'organizerID': row['organizerID'],
+                'startDate': row['startDate'].strftime('%Y-%m-%d %H:%M') if row['startDate'] else None,
+                'endDate': row['endDate'].strftime('%Y-%m-%d %H:%M') if row['endDate'] else None,
+                'openForTicket': row['openForTicket'].strftime('%Y-%m-%d %H:%M') if row['openForTicket'] else None,
+                'closeForTicket': row['closeForTicket'].strftime('%Y-%m-%d %H:%M') if row['closeForTicket'] else None,
+                'eventStatus': row['eventStatus'],
+                'avgRating': float(row['avgRating']) if row['avgRating'] is not None else None,
+                'tickets': {},
+                'reviews': []
+            }
+
+        if ticket_id not in processed_events[event_id]['tickets']:
+            processed_events[event_id]['tickets'][ticket_id] = {
+                'ticketID': row['ticketID'],
+                'ticketType': row['ticketType'],
+                'price': str(row['price']) if row['price'] else None,
+                'total': row['total'],
+                'sold': row['sold'],
+                'discounts': []
+            }
+
+        if row['discountID']:
+            processed_events[event_id]['tickets'][ticket_id]['discounts'].append({
+                'discountID': row['discountID'],
+                'discountName': row['discountName'],
+                'discountPercent': str(row['discountPercent']) if row['discountPercent'] else None,
+                'discountDescription': row['discountDescription'],
+                'discountStartDate': row['discountStartDate'].strftime('%Y-%m-%d %H:%M') if row['discountStartDate'] else None,
+                'discountEndDate': row['discountEndDate'].strftime('%Y-%m-%d %H:%M') if row['discountEndDate'] else None
+            })
+
+    # Fetch latest reviews
+    review_query = """
+    SELECT 
+        R.eventID,
+        R.rating,
+        R.comment,
+        R.reviewDate
+    FROM 
+        Reviews R
+    ORDER BY 
+        R.reviewDate DESC
+    """
+
+    reviews = db.execute_query(db_connection=db_conn, query=review_query).fetchall()
+
+    for review in reviews:
+        event_id = review['eventID']
+        if event_id in processed_events and len(processed_events[event_id]['reviews']) < 3:
+            processed_events[event_id]['reviews'].append({
+                'rating': review['rating'],
+                'comment': review['comment'],
+                'reviewDate': review['reviewDate'].strftime('%Y-%m-%d %H:%M') if review['reviewDate'] else None
+            })
+
+    return jsonify({'success': True, 'data': list(processed_events.values())})
+
+
+@app.route('/discount-list', methods=['GET'])
+def get_discount():
+    db_conn = db.connect_to_database()
+
+    query = """
+    SELECT 
+        D.discountID,
+        D.discountName,
+        D.discountPercent,
+        D.discountDescription,
+        D.discountStartDate,
+        D.discountEndDate,
+        E.eventID,
+        E.eventName,
+        T.ticketID,
+        T.ticketType,
+        T.price
+    FROM 
+        Discounts D, Tickets T, Events E
+    WHERE
+        D.ticketID = T.ticketID and E.eventID = T.eventID
+    """
+
+    events = db.execute_query(db_connection=db_conn, query=query).fetchall()
+    processed_discounts = {}
+
+    for row in events:
+        discount_id = row['discountID']
+
+        if discount_id not in processed_discounts:
+            processed_discounts[discount_id] = {
+                'eventID': row['eventID'],
+                'eventName': row['eventName'],
+                'ticketID': row['ticketID'],
+                'ticketType': row['ticketType'],
+                'ticketPrice': str(row['price']),
+                'discountID': row['discountID'],
+                'discountName': row['discountName'],
+                'discountPercent': str(row['discountPercent']),
+                'discountDescription': row['discountDescription'],
+                'discountStartDate': row['discountStartDate'].strftime('%Y-%m-%d %H:%M') if row['discountStartDate'] else None,
+                'discountEndDate': row['discountEndDate'].strftime('%Y-%m-%d %H:%M') if row['discountEndDate'] else None
+            }
+
+    return jsonify({'success': True, 'data': list(processed_discounts.values())})
 
 
 # Run listener

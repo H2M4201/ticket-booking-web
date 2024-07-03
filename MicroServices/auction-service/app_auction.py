@@ -5,7 +5,6 @@ import database.db_connector as db
 from flask_cors import CORS
 # from datetime import date
 from werkzeug.utils import secure_filename
-from validation import validate_new_listing, validate_photo, validate_bid
 import threading
 # from datetime import datetime
 import datetime

@@ -24,7 +24,7 @@ const BuyTicketModal = ({ show, onHide, event, onSubmit, user }) => {
     onSubmit({
       eventID: event.eventID,
       ticketID: selectedTicket,
-      quantity,
+      quantity: quantity,
       discountID: selectedDiscount,
       userID: user.id
     });

@@ -133,12 +133,20 @@ CREATE TABLE Discounts (
     discountDescription TEXT,
     discountStartDate DATETIME,
     discountEndDate DATETIME,
+    imageSource VARCHAR(250),
     PRIMARY KEY (discountID),
     FOREIGN KEY (ticketID) REFERENCES Tickets(ticketID)
 );
 
-INSERT INTO Discounts (ticketID, discountName, discountPercent, discountDescription, discountStartDate, discountEndDate) 
-    VALUES (1, 'Early Bird', 10.00, '10% off for early bookings', '2022-01-01', '2022-01-31');
+INSERT INTO Discounts (ticketID, discountName, discountPercent, discountDescription, discountStartDate, discountEndDate, imageSource) 
+    VALUES (1, 'Early Bird', 10.00, '10% off for early bookings', '2022-01-01', '2022-01-31', '');
+INSERT INTO Discounts (ticketID, discountName, discountPercent, discountDescription, discountStartDate, discountEndDate, imageSource) 
+    VALUES (2, 'First sale off', 12.00, '12% off', '2022-01-01', '2022-01-31', NULL);
+INSERT INTO Discounts (ticketID, discountName, discountPercent, discountDescription, discountStartDate, discountEndDate,imageSource) 
+    VALUES (3, 'VIP Sales off', 25.00, 'sale off 25% for VIP', '2022-01-01', '2022-01-31', NULL);
+INSERT INTO Discounts (ticketID, discountName, discountPercent, discountDescription, discountStartDate, discountEndDate, imageSource) 
+    VALUES (4, 'Early Bird', 8.00, '10% off for early bookings', '2022-01-01', '2022-01-31', NULL);
+
 
 CREATE TABLE Reviews (
     reviewID INT(11) UNIQUE NOT NULL AUTO_INCREMENT,
@@ -149,6 +157,20 @@ CREATE TABLE Reviews (
     comment TEXT,
     reviewDate DATETIME NOT NULL,
     PRIMARY KEY (reviewID),
+    FOREIGN KEY (userID) REFERENCES Users(userID),
+    FOREIGN KEY (eventID) REFERENCES Events(eventID),
+    FOREIGN KEY (ticketID) REFERENCES Tickets(ticketID)
+);
+
+CREATE TABLE CHECKOUT (
+    checkoutID INT(11) UNIQUE NOT NULL AUTO_INCREMENT,
+    userID INT(11) NOT NULL,
+    eventID INT(11) NOT NULL,
+    ticketID INT(11) NOT NULL,
+    quantity INT(11) NOT NULL,
+    discountID INT(11),
+    checkoutDate DATETIME,
+    PRIMARY KEY (checkoutID),
     FOREIGN KEY (userID) REFERENCES Users(userID),
     FOREIGN KEY (eventID) REFERENCES Events(eventID),
     FOREIGN KEY (ticketID) REFERENCES Tickets(ticketID)

@@ -45,7 +45,7 @@ function ChangePassword ({onChangePwd, user}) {
                 } catch (error) {
                     console.error('There was an error while saving the password change information:', error);
                 }
-
+                alert('password changed successfully!');
                 navigate('/');
             }
         } catch (error) {
@@ -58,11 +58,11 @@ function ChangePassword ({onChangePwd, user}) {
                 } else {
                     console.error('Password change information failed to be saved:', response_log);
                 }
-            } catch (error) {
-                console.error('There was an error while saving the password change information:', error);
-            }
+                } catch (error) {
+                    console.error('There was an error while saving the password change information:', error);
+                }
             console.error('There was an error during the login process:', error);
-            alert('login failed')
+            alert('change password failed');
         }
     };
 

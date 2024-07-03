@@ -45,7 +45,7 @@ function Register() {
 
                 try {
                     const response_log = await axios.post(`${config.logServiceUrl}/log`, {
-                        msg: formData.username + 'register successfully.'
+                        msg: formData.username + ' register successfully.'
                     });
                     if (response_log.status === 200) {
                         console.log('register information saved successfully:', response_log.data);
@@ -60,7 +60,7 @@ function Register() {
         } catch (error) {
             try {
                 const response_log = await axios.post(`${config.logServiceUrl}/log`, {
-                    msg: formData.username + 'register failed.'
+                    msg: formData.username + ' register failed.'
                 });
                 if (response_log.status === 200) {
                     console.log('register information saved successfully:', response_log.data);

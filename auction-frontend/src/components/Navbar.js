@@ -46,7 +46,7 @@ function CustomNavbar({ isLoggedIn, user, onLogout }) {
             <LinkContainer to="/">
               <Nav.Link>Home</Nav.Link>
             </LinkContainer>
-            <LinkContainer to="/submit-event">
+            <LinkContainer to="/discount-list">
               <Nav.Link>Discounts</Nav.Link>
             </LinkContainer>
             {isLoggedIn ? (

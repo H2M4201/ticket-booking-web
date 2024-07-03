@@ -5,7 +5,6 @@ import config from '../config';
 
 function EventDetail() {
   const { eventID } = useParams();
-  console.log(eventID);
   const [event, setEvent] = useState(null);
 
   useEffect(() => {
@@ -20,7 +19,7 @@ function EventDetail() {
     };
 
     fetchEventDetails();
-  }, [eventID]);
+  }, []);
 
   if (!event) {
     return <div>Loading...</div>;
@@ -31,7 +30,7 @@ function EventDetail() {
     <div className="container">
       
       {/* <img src={"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQp0rKM009sT3Qh-la5UpwgEv2F9iZ0fR_aVA&s"} alt={event.eventName} /> */}
-      <h1>{event.eventName}</h1>
+      <h1>{eventID.eventName}</h1>
       <p>{event.eventDescription}</p>
       <p>Location: {event.eventLocation}</p>
       <p>Start Date: {new Date(event.startDate).toLocaleDateString()}</p>

@@ -240,7 +240,7 @@ def get_active_events():
         E.endDate > NOW()
     """
 
-    events = db.execute_query(g.db, query, (event_id,)).fetchall()
+    events = db.execute_query(g.db, query).fetchall()
     processed_events = {}
 
     for row in events:
@@ -465,6 +465,53 @@ def get_discount():
             }
 
     return jsonify({'success': True, 'data': list(processed_discounts.values())})
+
+
+@app.route('/discount/<int:discountID>', methods=['GET'])
+def get_discount_detail(discountID):
+
+    query = """
+    SELECT 
+        D.discountID,
+        D.discountName,
+        D.discountPercent,
+        D.discountDescription,
+        D.discountStartDate,
+        D.discountEndDate,
+        E.eventID,
+        E.eventName,
+        T.ticketID,
+        T.ticketType,
+        T.price
+    FROM 
+        Discounts D, Tickets T, Events E
+    WHERE
+        D.ticketID = T.ticketID and E.eventID = T.eventID and D.discountID = %s
+    """
+
+    events = db.execute_query(g.db, query, (discountID)).fetchall()
+    processed_discounts = {}
+
+    for row in events:
+        discount_id = row['discountID']
+
+        if discount_id not in processed_discounts:
+            processed_discounts[discount_id] = {
+                'eventID': row['eventID'],
+                'eventName': row['eventName'],
+                'ticketID': row['ticketID'],
+                'ticketType': row['ticketType'],
+                'ticketPrice': str(row['price']),
+                'discountID': row['discountID'],
+                'discountName': row['discountName'],
+                'discountPercent': str(row['discountPercent']),
+                'discountDescription': row['discountDescription'],
+                'discountStartDate': row['discountStartDate'].strftime('%Y-%m-%d %H:%M') if row['discountStartDate'] else None,
+                'discountEndDate': row['discountEndDate'].strftime('%Y-%m-%d %H:%M') if row['discountEndDate'] else None
+            }
+
+    return jsonify({'success': True, 'data': list(processed_discounts.values())})
+
 
 
 # Run listener

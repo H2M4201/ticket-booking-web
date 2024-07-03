@@ -17,6 +17,7 @@ import ResetPassword from "./components/ResetPassword";
 import PaidTicketsPage from "./components/PaidTicket";
 import DiscountList from "./components/DiscountList";
 import EventDetail from "./components/EventDetail";
+import DiscountDetail from "./components/DiscountDetail";
 
 function App() {
   const [user, setUser] = useLocalStorage("user", null);
@@ -45,7 +46,8 @@ function App() {
         <Route path="/submit-event" element={<SubmitEventForm user={user} />} />
         <Route path="/submit-discount" element={<SubmitDiscountForm user={user} />} />
         <Route path="/cart" element={<Cart user={user} />} />
-        <Route path= "/event/:eventID" element={<EventDetail user={user}/>} />
+        <Route path= "/event/:eventID" element={<EventDetail />} />
+        <Route path= "/discount/:discountID" element={<DiscountDetail />} />
         <Route path="/paid-ticket" element={<PaidTicketsPage user={user} />} />
         <Route path="/discount-list" element={<DiscountList />}/>
         {/* other routes */}

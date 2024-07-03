@@ -38,7 +38,7 @@ const DiscountList = () => {
               <p className="card-text text-danger">
                 Discount: {event.discountPercent}%
               </p>
-              <btn href="#" className="btn btn-primary mt-auto">
+              <btn href="#" className="btn btn-primary mt-auto" onClick={() => navigate(`/discount/${event.discountID}`)}>
                 More Info
               </btn>
             </div>

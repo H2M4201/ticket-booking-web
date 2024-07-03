@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
+import axios from "axios";
+import config from "../config";
 import { Modal, Button, Form } from "react-bootstrap";
 
 const BuyTicketModal = ({ show, onHide, event, onSubmit, user }) => {
@@ -30,6 +32,7 @@ const BuyTicketModal = ({ show, onHide, event, onSubmit, user }) => {
     });
     onHide();
   };
+
 
   return (
     <Modal show={show} onHide={onHide}>

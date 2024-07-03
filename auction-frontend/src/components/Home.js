@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import config from "../config";
 import BuyTicketModal from "./BuyTicketModal";
+import { useNavigate } from "react-router-dom";
 
 function Listings({ user }) {
   const [userInfo, setUserInfo] = useState([]);
@@ -12,6 +13,8 @@ function Listings({ user }) {
   const [hasResults, setHasResults] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
+
+  const navigate = useNavigate();
 
   console.log({ userrr: user });
 
@@ -93,6 +96,7 @@ function Listings({ user }) {
       });
   };
 
+
   return (
     <>
       <div className="container px-5 py-3 my-4">
@@ -148,7 +152,7 @@ function Listings({ user }) {
                   </div>
                   {userInfo.isGuest ? (
                     <div className="card-footer bg-transparent">
-                      <button className="btn btn-primary" onClick={() => handleBuyTicket(event)}>
+                      <button className="btn btn-primary" onClick={() => navigate(`/event/${event.eventID}`)}>
                         MoreInfo
                       </button>
                       <button className="btn btn-primary" onClick={() => handleBuyTicket(event)}>

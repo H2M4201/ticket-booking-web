@@ -240,7 +240,7 @@ def get_active_events():
         E.endDate > NOW()
     """
 
-    events = db.execute_query(db_connection=db_conn, query=query).fetchall()
+    events = db.execute_query(g.db, query, (event_id,)).fetchall()
     processed_events = {}
 
     for row in events:
@@ -312,8 +312,6 @@ def get_active_events():
 
 @app.route('/event/<int:event_id>', methods=['GET'])
 def get_event_detail(event_id):
-    db_conn = db.connect_to_database()
-
     query = """
     SELECT 
         E.eventID, 
@@ -340,7 +338,6 @@ def get_event_detail(event_id):
         AVG(R.rating) AS avgRating
     FROM 
         Events E
-    WHERE E.eventID = %s
     LEFT JOIN 
         Tickets T ON E.eventID = T.eventID
     LEFT JOIN 
@@ -349,9 +346,10 @@ def get_event_detail(event_id):
         Reviews R ON E.eventID = R.eventID
     GROUP BY 
         E.eventID, T.ticketID, D.discountID
-    """, (event_id)
+    HAVING E.eventID = %s
+    """
 
-    events = db.execute_query(db_connection=db_conn, query=query).fetchall()
+    events = db.execute_query(g.db, query, (event_id,)).fetchall()
     processed_events = {}
 
     for row in events:
@@ -407,7 +405,7 @@ def get_event_detail(event_id):
     ORDER BY 
         R.reviewDate DESC
     """
-
+    db_conn = db.connect_to_database()
     reviews = db.execute_query(db_connection=db_conn, query=review_query).fetchall()
 
     for review in reviews:

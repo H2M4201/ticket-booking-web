@@ -252,9 +252,10 @@ def reset_password():
 
     return jsonify({'success': True, 'message': 'Password changed successfully'}), 200
 
-@app.route('/admin/delete/<int:user_id>', methods=['POST'])
+# need debugging
+@app.route('/admin/delete/<int:user_id>', methods=['DELETE'])
 def delete_user (user_id):
-
+    data = request.json
     try:
         conn = db.connect_to_database()
         cursor = conn.cursor()

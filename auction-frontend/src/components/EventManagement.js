@@ -2,26 +2,55 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import config from "../config";
 import BuyTicketModal from "./BuyTicketModal";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
-function Home({ user }) {
-  const [userInfo, setUserInfo] = useState([]);
+function EventManagement({ user }) {
   const [events, setEvents] = useState([]);
   const [searchQueryByName, setSearchQueryByName] = useState("");
-  const [searchQueryByLocation, setSearchQueryByLocation] = useState("");
   const [filteredResults, setFilteredResults] = useState([]);
   const [hasResults, setHasResults] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const [eventInfo, setEventInfo] = useState({
+    bankAccount: "",
+    dateJoined: "",
+    email: "",
+    firstName: "",
+    isAdmin: 0,
+    isEnterprise: 0,
+    isGuest: 0,
+    lastName: "",
+    password: "",
+    phoneNumber: "",
+    userID: 0,
+    userName: ""
+  });
+  const [formData, setFormData] = useState({
+    bankAccount: "",
+    dateJoined: "",
+    email: "",
+    firstName: "",
+    isAdmin: 0,
+    isEnterprise: 0,
+    isGuest: 0,
+    lastName: "",
+    password: "",
+    phoneNumber: "",
+    userID: 0,
+    userName: ""
+  });
+
+  const { userID } = useParams;
 
   const navigate = useNavigate();
 
   console.log({ userrr: user });
+  console.log(userID);
 
   useEffect(() => {
     // Fetch all events
     axios
-      .get(`${config.itemServiceUrl}/get-events`)
+      .get(`${config.itemServiceUrl}/editEvent/${userID}`)
       .then((response) => {
         setEvents(response.data.data);
         setFilteredResults(response.data.data); // Default to showing all events
@@ -49,40 +78,45 @@ function Home({ user }) {
     }
   };
 
-  const handleSearchByLocation = (e) => {
-    e.preventDefault();
-    if (!searchQueryByLocation) {
-      setFilteredResults(events);
-      setHasResults(events.length > 0);
-    } else {
-      const filtered = events.filter((event) => event.eventLocation.toLowerCase().includes(searchQueryByLocation.toLowerCase()));
-      setFilteredResults(filtered);
-      setHasResults(filtered.length > 0);
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async () => {
+    try {
+      const response = await axios.post(`${config.userServiceUrl}/user/${user.id}/profile`, {
+        userName: formData.userName,
+        phoneNumber: formData.phoneNumber,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email
+      });
+
+      if (response.data.success) {
+        alert("Profile updated");
+        navigate("/profile");
+      }
+    } catch (error) {
+      alert("An error occurred during profile update");
     }
   };
 
-  const handleBuyTicket = (event) => {
-    setSelectedEvent(event);
-    setShowModal(true);
-  };
-
-  const handleModalClose = () => {
-    setShowModal(false);
-    setSelectedEvent(null);
-  };
-
-  const handleModalSubmit = (data) => {
+  useEffect(() => {
+    if (!user || !user.id) return;
     axios
-      .post(`${config.userServiceUrl}/add-checkout`, data)
+      .get(`${config.userServiceUrl}/user/${user.id}/profile`)
       .then((response) => {
-        console.log("Ticket purchased successfully", response);
-        alert("Ticket purchased successfully!");
+        if (response.data.success) {
+          setUserInfo(response.data.data);
+          setFormData(response.data.data);
+        }
       })
-      .catch((error) => {
-        console.error("Error purchasing ticket", error);
-        alert("Error purchasing ticket. Please try again.");
-      });
-  };
+      .catch((error) => console.log(error));
+  }, [user, user.id]);
+
+  if (!userInfo) {
+    return <div>Loading...</div>;
+  }
 
 
   return (
@@ -99,24 +133,6 @@ function Home({ user }) {
                   value={searchQueryByName}
                   onChange={(e) => setSearchQueryByName(e.target.value)}
                   placeholder="Search events by name"
-                />
-                <button className="main-button" type="submit">
-                  Search
-                </button>
-              </div>
-            </div>
-          </div>
-        </form>
-        <form onSubmit={handleSearchByLocation}>
-          <div className="row justify-content-center my-3">
-            <div className="col-6">
-              <div className="input-group">
-                <input
-                  type="search"
-                  className="form-control"
-                  value={searchQueryByLocation}
-                  onChange={(e) => setSearchQueryByLocation(e.target.value)}
-                  placeholder="Search events by location"
                 />
                 <button className="main-button" type="submit">
                   Search
@@ -171,7 +187,7 @@ function Home({ user }) {
   );
 }
 
-export default Home;
+export default EventManagement;
 
 
 // {Object.values(event.tickets).map((ticket) => (

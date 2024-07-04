@@ -298,7 +298,7 @@ def get_active_events():
     """
 
     reviews = db.execute_query(db_connection=db_conn, query=review_query).fetchall()
-
+    
     for review in reviews:
         event_id = review['eventID']
         if event_id in processed_events and len(processed_events[event_id]['reviews']) < 3:
@@ -307,7 +307,7 @@ def get_active_events():
                 'comment': review['comment'],
                 'reviewDate': review['reviewDate'].strftime('%Y-%m-%d %H:%M') if review['reviewDate'] else None
             })
-
+    
     return jsonify({'success': True, 'data': list(processed_events.values())})
 
 @app.route('/event/<int:event_id>', methods=['GET'])
@@ -393,6 +393,9 @@ def get_event_detail(event_id):
                 'discountEndDate': row['discountEndDate'].strftime('%Y-%m-%d %H:%M') if row['discountEndDate'] else None
             })
 
+    tickets_list = list(processed_events[event_id]['tickets'].values())
+    processed_events[event_id]['tickets'] = tickets_list
+    
     # Fetch latest reviews
     review_query = """
     SELECT 
@@ -416,8 +419,9 @@ def get_event_detail(event_id):
                 'comment': review['comment'],
                 'reviewDate': review['reviewDate'].strftime('%Y-%m-%d %H:%M') if review['reviewDate'] else None
             })
+    
 
-    return jsonify({'success': True, 'data': list(processed_events.values())})
+    return jsonify({'success': True, 'data': processed_events[event_id]})
 
 
 @app.route('/discount-list', methods=['GET'])

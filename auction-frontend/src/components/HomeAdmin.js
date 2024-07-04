@@ -63,7 +63,7 @@ function HomeAdmin({ user }) {
 
   const handleDelete = async (userID) => {
     try {
-      const response = await axios.post(`${config.userServiceUrl}/admin/delete/${userID}`);
+      const response = await axios.delete(`${config.userServiceUrl}/admin/delete/${userID}`);
       if (response.status === 200) {
         setFilteredResults(filteredResults.filter(user => user.userID !== userID));
       } else {

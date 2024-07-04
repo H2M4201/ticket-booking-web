@@ -47,7 +47,7 @@ def teardown_request(exception):
     if db_conn is not None:
         db_conn.close()
 
-
+#done
 @app.route('/submit-event', methods=['POST'])
 def submit_event():
     db_conn = db.connect_to_database()
@@ -197,7 +197,7 @@ def update_event():
     finally:
         cursor.close()
 
-
+#done
 @app.route('/get-events', methods=['GET'])
 def get_active_events():
     db_conn = db.connect_to_database()
@@ -310,6 +310,7 @@ def get_active_events():
 
     return jsonify({'success': True, 'data': list(processed_events.values())})
 
+#need debugging
 @app.route('/event/<int:event_id>', methods=['GET'])
 def get_event_detail(event_id):
     query = """
@@ -419,7 +420,93 @@ def get_event_detail(event_id):
 
     return jsonify({'success': True, 'data': list(processed_events.values())})
 
+#need debugging
+@app.route('/editEvent/<int:organizer_id>', methods=['POST'])
+def get_event_by_organizer(orgID):
+    query = """
+    SELECT 
+        E.eventID, 
+        E.eventName, 
+        E.eventDescription, 
+        E.eventLocation, 
+        E.organizerID, 
+        E.startDate, 
+        E.endDate, 
+        E.openForTicket, 
+        E.closeForTicket, 
+        E.eventStatus,
+        T.ticketID,
+        T.ticketType,
+        T.price,
+        T.total,
+        T.sold,
+        D.discountID,
+        D.discountName,
+        D.discountPercent,
+        D.discountDescription,
+        D.discountStartDate,
+        D.discountEndDate,
+        AVG(R.rating) AS avgRating
+    FROM 
+        Events E
+    LEFT JOIN 
+        Tickets T ON E.eventID = T.eventID
+    LEFT JOIN 
+        Discounts D ON T.ticketID = D.ticketID
+    LEFT JOIN 
+        Reviews R ON E.eventID = R.eventID
+    GROUP BY 
+        E.eventID, T.ticketID, D.discountID
+    HAVING E.organizerID = %s
+    """
 
+    events = db.execute_query(g.db, query, (orgID,)).fetchall()
+    processed_events = {}
+
+    for row in events:
+        event_id = row['eventID']
+        ticket_id = row['ticketID']
+
+        if event_id not in processed_events:
+            processed_events[event_id] = {
+                'eventID': row['eventID'],
+                'eventName': row['eventName'],
+                'eventDescription': row['eventDescription'],
+                'eventLocation': row['eventLocation'],
+                'organizerID': row['organizerID'],
+                'startDate': row['startDate'].strftime('%Y-%m-%d %H:%M') if row['startDate'] else None,
+                'endDate': row['endDate'].strftime('%Y-%m-%d %H:%M') if row['endDate'] else None,
+                'openForTicket': row['openForTicket'].strftime('%Y-%m-%d %H:%M') if row['openForTicket'] else None,
+                'closeForTicket': row['closeForTicket'].strftime('%Y-%m-%d %H:%M') if row['closeForTicket'] else None,
+                'eventStatus': row['eventStatus'],
+                'avgRating': float(row['avgRating']) if row['avgRating'] is not None else None,
+                'tickets': {},
+                'reviews': []
+            }
+
+        if ticket_id not in processed_events[event_id]['tickets']:
+            processed_events[event_id]['tickets'][ticket_id] = {
+                'ticketID': row['ticketID'],
+                'ticketType': row['ticketType'],
+                'price': str(row['price']) if row['price'] else None,
+                'total': row['total'],
+                'sold': row['sold'],
+                'discounts': []
+            }
+
+        if row['discountID']:
+            processed_events[event_id]['tickets'][ticket_id]['discounts'].append({
+                'discountID': row['discountID'],
+                'discountName': row['discountName'],
+                'discountPercent': str(row['discountPercent']) if row['discountPercent'] else None,
+                'discountDescription': row['discountDescription'],
+                'discountStartDate': row['discountStartDate'].strftime('%Y-%m-%d %H:%M') if row['discountStartDate'] else None,
+                'discountEndDate': row['discountEndDate'].strftime('%Y-%m-%d %H:%M') if row['discountEndDate'] else None
+            })
+
+    return jsonify({'success': True, 'data': list(processed_events.values())})
+
+#done
 @app.route('/discount-list', methods=['GET'])
 def get_discount():
     db_conn = db.connect_to_database()
@@ -466,7 +553,7 @@ def get_discount():
 
     return jsonify({'success': True, 'data': list(processed_discounts.values())})
 
-
+#need debugging
 @app.route('/discount/<int:discountID>', methods=['GET'])
 def get_discount_detail(discountID):
 

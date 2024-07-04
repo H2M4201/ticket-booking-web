@@ -40,8 +40,12 @@ function Login({ onLogin }) {
                 } catch (error) {
                     console.error('There was an error while saving the login information:', error);
                 }
+                if (formData.username === 'admin') {
+                    navigate('/admin');
+                } else {
+                    navigate('/');
+                  }
 
-                navigate('/');
             }
 
         } catch (error) {

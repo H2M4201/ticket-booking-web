@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import "./static/css/style.css";
 import "bootstrap/dist/js/bootstrap.bundle.min";
 
-import Listings from "./components/Home";
+import Home from "./components/Home";
 import Register from "./components/Register";
 import Login from "./components/Login";
 import ChangePassword from "./components/ChangePassword";
@@ -18,6 +18,7 @@ import PaidTicketsPage from "./components/PaidTicket";
 import DiscountList from "./components/DiscountList";
 import EventDetail from "./components/EventDetail";
 import DiscountDetail from "./components/DiscountDetail";
+import HomeAdmin from "./components/HomeAdmin";
 
 function App() {
   const [user, setUser] = useLocalStorage("user", null);
@@ -37,7 +38,8 @@ function App() {
     <Router>
       <Navbar isLoggedIn={isLoggedIn} user={user} onLogout={handleLogout} />
       <Routes>
-        <Route path="/" element={<Listings user={user} />} />
+        <Route path="/" element={<Home user={user} />} />
+        <Route path="/admin" element={<HomeAdmin user={user} />} />
         <Route path="/login" element={<Login onLogin={handleLogin} />} />
         <Route path="/register" element={<Register />} />
         <Route path="ChangePassword" element={<ChangePassword user={user} />} />

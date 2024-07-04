@@ -4,7 +4,7 @@ import config from "../config";
 import BuyTicketModal from "./BuyTicketModal";
 import { useNavigate } from "react-router-dom";
 
-function Listings({ user }) {
+function Home({ user }) {
   const [userInfo, setUserInfo] = useState([]);
   const [events, setEvents] = useState([]);
   const [searchQueryByName, setSearchQueryByName] = useState("");
@@ -183,7 +183,7 @@ function Listings({ user }) {
   );
 }
 
-export default Listings;
+export default Home;
 
 
 // {Object.values(event.tickets).map((ticket) => (

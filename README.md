@@ -1,8 +1,8 @@
 ## __Microservices__
 
 There are five mircroservices backend talking and communicating with each other.
- - **User Microservice**: Manages user accounts, authentication, and profiles.
- - **Item Microservice**: Handles item listings, updates, and categorization.
+ - **User Microservice**: Manages user accounts, authentication, profiles.
+ - **Item Microservice**: Handles event, ticket and discount listings, updates, and categorization.
  - **Auction Microservice**: Facilitates auction listings, bidding processes, and auction timers.
  - **Notification Microservice**: Sends out alerts and notifications to users.
  - **Log Microservice**: Records user activity and saves them in database.

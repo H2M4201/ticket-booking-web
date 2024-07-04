@@ -36,25 +36,35 @@ function CustomNavbar({ isLoggedIn, user, onLogout }) {
       <Container>
         <LinkContainer to="/">
           <Navbar.Brand>
-            <img src={process.env.PUBLIC_URL + "/static/img/logo.png"} alt="Logo" className="logo-img" />
             <span className="auction-text">Ticket Booking System</span>
           </Navbar.Brand>
         </LinkContainer>
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="ms-auto">
-            <LinkContainer to="/">
+            { userInfo.isAdmin ? (<>
+              <LinkContainer to="/admin">
+                <Nav.Link>Admin Home</Nav.Link>
+              </LinkContainer>
+              <LinkContainer to="/discount-list">
+                <Nav.Link>Report</Nav.Link>
+              </LinkContainer>
+            </>) : (<>
+              <LinkContainer to="/">
               <Nav.Link>Home</Nav.Link>
             </LinkContainer>
             <LinkContainer to="/discount-list">
               <Nav.Link>Discounts</Nav.Link>
             </LinkContainer>
+            </>)
+
+            }
             {isLoggedIn ? (
               <NavDropdown title={user.username} id="basic-nav-dropdown">
                 <LinkContainer to="/profile">
                   <NavDropdown.Item>Profile</NavDropdown.Item>
                 </LinkContainer>
-                {userInfo.isGuest ? (
+                  {userInfo.isGuest ? (
                   <>
                     <LinkContainer to="/cart">
                       <NavDropdown.Item>Cart</NavDropdown.Item>
@@ -68,8 +78,13 @@ function CustomNavbar({ isLoggedIn, user, onLogout }) {
                     <LinkContainer to="/submit-event">
                       <NavDropdown.Item>Add Event</NavDropdown.Item>
                     </LinkContainer>
+                    <>
+                    <LinkContainer to="/submit-event">
+                      <NavDropdown.Item>Edit Event</NavDropdown.Item>
+                    </LinkContainer>
                   </>
-                )}
+                  </>
+                )}               
                 <NavDropdown.Divider />
                 <NavDropdown.Item onClick={handleLogout}>Logout</NavDropdown.Item>
               </NavDropdown>

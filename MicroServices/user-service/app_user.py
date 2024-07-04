@@ -103,6 +103,29 @@ def login():
 
     return jsonify({'success': False, 'error': 'Invalid username or password'}), 401
 
+@app.route('/admin', methods=['GET'])
+def get_user_list():
+    query = 'SELECT * FROM USERS'
+    users = db.execute_query(g.db, query).fetchall()
+    processed_users = {}
+
+    for row in users:
+        userID = row['userID']
+
+        if userID not in processed_users:
+            processed_users[userID] = {
+                'userID': row['userID'],
+                'userName': row['userName'],
+                'firstName': row['firstName'],
+                'lastName': row['lastName'],
+                'email': row['email'],
+                'phone': row['phoneNumber'],
+                'bank': row['bankAccount'],
+                'dateJoined': row['dateJoined'].strftime('%Y-%m-%d %H:%M') if row['dateJoined'] else None,
+                'type': 'admin' if row['isAdmin'] else ('Guest' if row['isGuest'] else 'Enterprise')
+            }
+    return jsonify({'success': True, 'data': list(processed_users.values())})
+
 @app.route('/user/<int:user_id>/profile', methods=['GET'])
 def get_user_profile(user_id):
     user_query = "SELECT * FROM Users WHERE userID = %s;"
@@ -184,8 +207,6 @@ def change_password(user_id):
 
     return jsonify({'success': True, 'message': 'Password changed successfully'}), 200
 
-
-
 @app.route('/ResetPassword', methods=['POST'])
 def reset_password():
     data = request.json
@@ -231,6 +252,24 @@ def reset_password():
 
     return jsonify({'success': True, 'message': 'Password changed successfully'}), 200
 
+@app.route('/admin/delete/<int:user_id>', methods=['POST'])
+def delete_user (user_id):
+
+    try:
+        conn = db.connect_to_database()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM users WHERE userID = %s", (user_id,))
+        conn.commit()
+        
+        if cursor.rowcount == 0:
+            return jsonify({'message': 'User not found'}), 404
+        
+        return jsonify({'message': 'User deleted successfully'}), 200
+    except Exception as e:
+        return jsonify({'message': 'Error deleting user', 'error': str(e)}), 500
+    finally:
+        cursor.close()
+
 @app.route('/add-checkout', methods=['POST'])
 def add_checkout():
     data = request.json
@@ -261,7 +300,7 @@ def add_checkout():
 
     return jsonify({'success': True, 'message': 'Ticket purchased successfully'}), 201
 
-
+# need debugging
 @app.route('/get-checkout', methods=['GET'])
 def get_checkout():
     user_id = request.args.get('user_id')
@@ -314,7 +353,7 @@ def get_checkout():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
-
+# need debugging
 @app.route('/paid-checkout', methods=['POST'])
 def paid_checkout():
     data = request.json
@@ -371,6 +410,7 @@ def paid_checkout():
         g.db.rollback()
         return jsonify({'success': False, 'error': str(e)}), 500
 
+# need debugging
 @app.route('/get-paid-tickets', methods=['GET'])
 def get_paid_tickets():
     user_id = request.args.get('user_id')
@@ -423,7 +463,7 @@ def get_paid_tickets():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
-
+# need debugging
 @app.route('/add-review', methods=['POST'])
 def add_review():
     data = request.json
@@ -465,7 +505,7 @@ def add_review():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
-
+# need debugging
 @app.route('/get-reviews', methods=['GET'])
 def get_reviews():
     user_id = request.args.get('user_id')

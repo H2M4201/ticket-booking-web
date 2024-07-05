@@ -19,6 +19,7 @@ import DiscountList from "./components/DiscountList";
 import EventDetail from "./components/EventDetail";
 import DiscountDetail from "./components/DiscountDetail";
 import HomeAdmin from "./components/HomeAdmin";
+import EditEventForm from "./components/EditEvent";
 
 function App() {
   const [user, setUser] = useLocalStorage("user", null);
@@ -48,6 +49,7 @@ function App() {
           <Route path="/profile" element={<Profile user={user} />} />
           <Route path="/submit-event" element={<SubmitEventForm user={user} />} />
           <Route path="/submit-discount" element={<SubmitDiscountForm user={user} />} />
+          <Route path="/event/:eventID/edit" element={<EditEventForm user={user} />} />
           <Route path="/cart" element={<Cart user={user} />} />
           <Route path= "/event/:eventID" element={<EventDetail />} />
           <Route path= "/discount/:discountID" element={<DiscountDetail />} />

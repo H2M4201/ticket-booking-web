@@ -19,6 +19,7 @@ function EventDetail() {
 
     fetchEventDetails();
   }, []);
+  console.log(event);
 
   if (!event) {
     return <div>Loading...</div>;
@@ -69,7 +70,7 @@ function EventDetail() {
       <h2>Reviews</h2>
       {
         event.reviews.map((review) => (
-          <div style={{width: "80%", margin: "auto", border: "1px solid rgba(0,0,0,0.5)", padding: "8px 15px", marginBottom: "10px", borderRadius: "15px"}}>
+          <div style={{width: "100%", margin: "auto", border: "1px solid rgba(0,0,0,0.5)", padding: "8px 15px", marginBottom: "10px", borderRadius: "15px"}}>
             <div className="review">
               <div className="rating">Rating: {review.rating}</div>
               <div className="comment">Comment: {review.comment}</div>

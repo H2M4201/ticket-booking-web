@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import {useNavigate} from 'react-router-dom';
 import config from "../config";
+import { Dropdown, DropdownButton } from 'react-bootstrap';
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 function Register() {
     const [formData, setFormData] = useState({
@@ -14,7 +16,13 @@ function Register() {
         confirmPassword: '',
         type: '',
     });
-    const navigate = useNavigate();
+    const [selectedOption, setSelectedOption] = useState('Select Option');
+  const navigate = useNavigate();
+
+  const handleSelect = (option) => {
+    setSelectedOption(option);
+    console.log(`Selected option: ${option}`);
+      };
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -122,12 +130,27 @@ function Register() {
                             <input type='password' className="form-control" name='confirmPassword' value={formData.confirmPassword} onChange={handleChange} />
                         </div>
                     </div>
-                    <div className='row mt-4'>
+                    <div className='row my-4'>
                         <div className="col-4">
-                            <label htmlFor='type' className="form-label">Account Type:</label>
-                            <input type='type' className="form-control" name='type' value={formData.type} onChange={handleChange} />
+                        <label htmlFor='confirmPassword' className="form-label">Account Type:</label>
+                            <div className="dropdown">
+                            <button
+                                type="button"
+                                id="dropdownMenuButton"
+                                data-bs-toggle="dropdown"
+                                aria-expanded="false"
+                            >
+                                {selectedOption}
+                            
+                            </button>
+                            <ul className="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                <li><a className="dropdown-item" href="#" onClick={() => handleSelect('Guest')}>Guest</a></li>
+                                <li><a className="dropdown-item" href="#" onClick={() => handleSelect('Admin')}>Admin</a></li>
+                                <li><a className="dropdown-item" href="#" onClick={() => handleSelect('Enterprise')}>Enterprise</a></li>
+                            </ul>
+                            </div>
                         </div>
-                    </div>
+                        </div>
                     <div className='row my-4'>
                         <div className="col-4">
                             <button type="submit" className="btn btn-danger">Create Account</button>

@@ -174,9 +174,6 @@ def update_event():
         cursor.execute(query, (event_name, event_desc, event_loc, event_start_date, event_end_date,
                                 ticket_start_date, ticket_end_date, event_id))
 
-        query = "DELETE FROM Tickets WHERE event_id = %s"
-        cursor.execute(query, (event_id,))
-
         for ticket in tickets:
             ticket_total = ticket['ticket_total']
             ticket_sold = ticket['ticket_sold']
@@ -493,28 +490,22 @@ def get_discount_detail(discountID):
         D.ticketID = T.ticketID and E.eventID = T.eventID and D.discountID = %s
     """
 
-    events = db.execute_query(g.db, query, (discountID)).fetchall()
-    processed_discounts = {}
+    events = db.execute_query(g.db, query, (discountID)).fetchone()
+    processed_discounts = {
+        'eventID': events['eventID'],
+        'eventName': events['eventName'],
+        'ticketID': events['ticketID'],
+        'ticketType': events['ticketType'],
+        'ticketPrice': str(events['price']),
+        'discountID': events['discountID'],
+        'discountName': events['discountName'],
+        'discountPercent': str(events['discountPercent']),
+        'discountDescription': events['discountDescription'],
+        'discountStartDate': events['discountStartDate'].strftime('%Y-%m-%d %H:%M') if events['discountStartDate'] else None,
+        'discountEndDate': events['discountEndDate'].strftime('%Y-%m-%d %H:%M') if events['discountEndDate'] else None
+    }
 
-    for row in events:
-        discount_id = row['discountID']
-
-        if discount_id not in processed_discounts:
-            processed_discounts[discount_id] = {
-                'eventID': row['eventID'],
-                'eventName': row['eventName'],
-                'ticketID': row['ticketID'],
-                'ticketType': row['ticketType'],
-                'ticketPrice': str(row['price']),
-                'discountID': row['discountID'],
-                'discountName': row['discountName'],
-                'discountPercent': str(row['discountPercent']),
-                'discountDescription': row['discountDescription'],
-                'discountStartDate': row['discountStartDate'].strftime('%Y-%m-%d %H:%M') if row['discountStartDate'] else None,
-                'discountEndDate': row['discountEndDate'].strftime('%Y-%m-%d %H:%M') if row['discountEndDate'] else None
-            }
-
-    return jsonify({'success': True, 'data': list(processed_discounts.values())})
+    return jsonify({'success': True, 'data': processed_discounts})
 
 
 

@@ -161,7 +161,11 @@ function Home({ user }) {
                         Buy Ticket
                       </button>
                     </div>
-                  ) : null}
+                  ) : userInfo.isEnterprise ? (<>
+                    <button className="btn btn-primary" style={{marginRight: 20+"px"}} onClick={() => navigate(`/event/${event.eventID}/edit`)}>
+                      Edit Event
+                    </button>
+                  </>) : null}
                 </div>
               </div>
             ))}
@@ -187,50 +191,3 @@ function Home({ user }) {
 
 export default Home;
 
-
-// {Object.values(event.tickets).map((ticket) => (
-//   <div key={ticket.ticketID} className="mb-3">
-//     <p className="card-subtitle mb-2 text-muted">Type: {ticket.ticketType}</p>
-//     <p className="card-subtitle mb-2 text-muted">Price: ${ticket.price}</p>
-//     <p className="card-subtitle mb-2 text-muted">
-//       Total: {ticket.total}, Sold: {ticket.sold}
-//     </p>
-//     <h6>Discounts</h6>
-//     {ticket.discounts.length > 0 ? (
-//       ticket.discounts.map((discount) => (
-//         <div key={discount.discountID}>
-//           <p className="card-subtitle mb-2 text-muted">Name: {discount.discountName}</p>
-//           <p className="card-subtitle mb-2 text-muted">Percent: {discount.discountPercent}%</p>
-//           <p className="card-subtitle mb-2 text-muted">
-//             Description: {discount.discountDescription}
-//           </p>
-//           <p className="card-subtitle mb-2 text-muted">
-//             Start Date: {formatDate(discount.discountStartDate)}
-//           </p>
-//           <p className="card-subtitle mb-2 text-muted">
-//             End Date: {formatDate(discount.discountEndDate)}
-//           </p>
-//         </div>
-//       ))
-//     ) : (
-//       <p className="card-subtitle mb-2 text-muted">No discounts available</p>
-//     )}
-//   </div>
-// ))}
-
-// <h6>Average Rating</h6>
-// <p className="card-subtitle mb-2 text-muted">
-//   {event.avgRating ? `${event.avgRating.toFixed(1)} stars` : "No reviews yet"}
-// </p>
-// <h6>Latest Reviews</h6>
-// {event.reviews && event.reviews.length > 0 ? (
-//   event.reviews.map((review, index) => (
-//     <div key={index}>
-//       <p className="card-subtitle mb-2 text-muted">Rating: {review.rating}</p>
-//       <p className="card-subtitle mb-2 text-muted">Comment: {review.comment}</p>
-//       <p className="card-subtitle mb-2 text-muted">Date: {formatDate(review.reviewDate)}</p>
-//     </div>
-//   ))
-// ) : (
-//   <p className="card-subtitle mb-2 text-muted">No reviews available</p>
-// )}

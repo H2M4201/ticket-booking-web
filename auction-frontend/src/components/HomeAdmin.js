@@ -62,6 +62,7 @@ function HomeAdmin({ user }) {
   };
 
   const handleDelete = async (userID) => {
+    console.log('abc', userID);
     try {
       const response = await axios.delete(`${config.userServiceUrl}/admin/delete/${userID}`);
       if (response.status === 200) {
@@ -111,7 +112,7 @@ function HomeAdmin({ user }) {
                     <p className="card-subtitle mb-2 text-muted">Phone Number: {users.phone || "No phone number"}</p>
                     <p className="card-subtitle mb-2 text-muted">Date Joined: {formatDate(users.dateJoined)}</p>
                     <p className="card-subtitle mb-2 text-muted">Account Type: {users.type}</p>
-                    <button className="btn btn-danger mt-3" onClick={() => handleDelete(user.userID)}>Delete Account</button>
+                    <button className="btn btn-danger mt-3" onClick={() => handleDelete(users.userID)}>Delete Account</button>
                   </div>
                 </div>
               </div>

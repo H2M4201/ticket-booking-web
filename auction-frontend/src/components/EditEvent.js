@@ -1,8 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { useParams, useNavigate } from "react-router-dom";
 import config from "../config";
 
 const EditEventForm = ({ user }) => {
+  const { eventID } = useParams();
   const [formData, setFormData] = useState({
     event_name: "",
     event_desc: "",
@@ -29,6 +31,47 @@ const EditEventForm = ({ user }) => {
     ],
     photo: null
   });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (eventID) {
+      axios
+        .get(`${config.itemServiceUrl}/event/${eventID}`)
+        .then((response) => {
+          const event = response.data.data;
+          const tickets = event.tickets.map((ticket) => ({
+            ticket_total: ticket.total,
+            ticket_name: ticket.ticketType,
+            ticket_price: ticket.price,
+            discounts: ticket.discounts.map((discount) => ({
+              discount_name: discount.discountName,
+              discount_percent: discount.discountPercent,
+              discount_description: discount.discountDescription,
+              discount_start_date: discount.discountStartDate,
+              discount_end_date: discount.discountEndDate
+            }))
+          }));
+          setFormData({
+            event_name: event.eventName,
+            event_desc: event.eventDescription,
+            event_loc: event.eventLocation,
+            event_start_date: event.startDate,
+            event_end_date: event.endDate,
+            ticket_start_date: event.openForTicket,
+            ticket_end_date: event.closeForTicket,
+            tickets: tickets,
+            photo: null
+          });
+          setLoading(false);
+        })
+        .catch((error) => {
+          console.error("Error fetching event data:", error);
+          setLoading(false);
+        });
+    } else {
+      setLoading(false);
+    }
+  }, [eventID]);
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
@@ -98,10 +141,13 @@ const EditEventForm = ({ user }) => {
     setFormData({ ...formData, tickets: newTickets });
   };
 
+  const navigate = useNavigate();
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     const form = new FormData();
+    form.append("event_id", eventID);
     form.append("event_name", formData.event_name);
     form.append("event_desc", formData.event_desc);
     form.append("event_loc", formData.event_loc);
@@ -139,14 +185,15 @@ const EditEventForm = ({ user }) => {
     });
 
     try {
-      const response = await axios.post(`${config.itemServiceUrl}/submit-event`, form, {
+      const url = `${config.itemServiceUrl}/update-event`;
+      const response = await axios.post(url, form, {
         headers: {
           "Content-Type": "multipart/form-data"
         }
       });
 
       if (response.status === 200) {
-        alert("Listing submitted successfully");
+        alert("Event updated successfully");
         setFormData({
           event_name: "",
           event_desc: "",
@@ -173,18 +220,24 @@ const EditEventForm = ({ user }) => {
           ],
           photo: null
         });
+
+        navigate(`/event/${eventID}`);
       }
     } catch (error) {
-      console.error("Error submitting listing:", error);
-      alert("Failed to submit listing");
+      console.error("Error updating event:", error);
+      alert("Failed to update event");
     }
   };
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="container pt-5">
       <div className="row mt-2">
         <div className="col">
-          <h1>Add Event</h1>
+          <h1>{eventID ? "Edit Event" : "Add Event"}</h1>
         </div>
       </div>
       <div className="row mt-2">
@@ -212,8 +265,7 @@ const EditEventForm = ({ user }) => {
         <div className="row mt-2">
           <div className="col-4">
             <label htmlFor="event_desc" className="form-label">
-              {" "}
-              Event Description:{" "}
+              Event Description:
             </label>
             <textarea
               className="form-control"
@@ -246,7 +298,7 @@ const EditEventForm = ({ user }) => {
               Event Start Date:<strong style={{ color: "red" }}>*</strong>
             </label>
             <input
-              type="date"
+              type="datetime-local"
               className="form-control"
               id="event_start_date"
               name="event_start_date"
@@ -262,7 +314,7 @@ const EditEventForm = ({ user }) => {
               Event End Date:<strong style={{ color: "red" }}>*</strong>
             </label>
             <input
-              type="date"
+              type="datetime-local"
               className="form-control"
               id="event_end_date"
               name="event_end_date"
@@ -272,14 +324,13 @@ const EditEventForm = ({ user }) => {
             />
           </div>
         </div>
-
         <div className="row mt-2">
           <div className="col-4">
             <label htmlFor="ticket_start_date" className="form-label">
               Ticket Start Date:<strong style={{ color: "red" }}>*</strong>
             </label>
             <input
-              type="date"
+              type="datetime-local"
               className="form-control"
               id="ticket_start_date"
               name="ticket_start_date"
@@ -295,7 +346,7 @@ const EditEventForm = ({ user }) => {
               Ticket End Date:<strong style={{ color: "red" }}>*</strong>
             </label>
             <input
-              type="date"
+              type="datetime-local"
               className="form-control"
               id="ticket_end_date"
               name="ticket_end_date"
@@ -305,13 +356,11 @@ const EditEventForm = ({ user }) => {
             />
           </div>
         </div>
-
         <div className="row mt-2">
           <div className="col">
-            <h1>Add Ticket types</h1>
+            <h1>Ticket Types</h1>
           </div>
         </div>
-
         {formData.tickets.map((ticket, ticketIndex) => (
           <div key={ticketIndex} className="ticket-section">
             <div className="row mt-2">
@@ -362,13 +411,11 @@ const EditEventForm = ({ user }) => {
                 />
               </div>
             </div>
-
             <div className="row mt-2">
               <div className="col">
                 <h2>Discounts</h2>
               </div>
             </div>
-
             {ticket.discounts.map((discount, discountIndex) => (
               <div key={discountIndex} className="discount-section">
                 <div className="row mt-2">
@@ -421,7 +468,7 @@ const EditEventForm = ({ user }) => {
                       Discount Start Date:
                     </label>
                     <input
-                      type="date"
+                      type="datetime-local"
                       className="form-control"
                       id={`discount_start_date_${ticketIndex}_${discountIndex}`}
                       name="discount_start_date"
@@ -436,7 +483,7 @@ const EditEventForm = ({ user }) => {
                       Discount End Date:
                     </label>
                     <input
-                      type="date"
+                      type="datetime-local"
                       className="form-control"
                       id={`discount_end_date_${ticketIndex}_${discountIndex}`}
                       name="discount_end_date"
@@ -458,7 +505,6 @@ const EditEventForm = ({ user }) => {
                 </div>
               </div>
             ))}
-
             <div className="row mt-2">
               <div className="col-4">
                 <button type="button" className="btn btn-secondary" onClick={() => addDiscount(ticketIndex)}>
@@ -466,7 +512,6 @@ const EditEventForm = ({ user }) => {
                 </button>
               </div>
             </div>
-
             <div className="row mt-2">
               <div className="col-4">
                 <button type="button" className="btn btn-danger" onClick={() => removeTicket(ticketIndex)}>
@@ -476,7 +521,6 @@ const EditEventForm = ({ user }) => {
             </div>
           </div>
         ))}
-
         <div className="row mt-2">
           <div className="col-4">
             <button type="button" className="btn btn-secondary" onClick={addTicket}>
@@ -484,16 +528,14 @@ const EditEventForm = ({ user }) => {
             </button>
           </div>
         </div>
-
         <div className="row mt-2">
           <div className="col-4">
             <label htmlFor="photo" className="form-label">
-              Event Photo:{" "}
+              Event Photo:
             </label>
             <input type="file" className="form-control" id="photo" name="photo" onChange={handleChange} />
           </div>
         </div>
-
         <div className="row my-5">
           <div className="col-4">
             <button className="btn main-button btn-primary" type="submit">

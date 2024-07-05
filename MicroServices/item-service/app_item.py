@@ -150,21 +150,38 @@ def submit_event():
 @app.route('/update-event', methods=['POST'])
 def update_event():
     db_conn = db.connect_to_database()
+    event_id = request.form['event_id']
+    event_name = request.form['event_name']
+    event_desc = request.form['event_desc']
+    event_loc = request.form['event_loc']
+    event_start_date = request.form['event_start_date']
+    event_end_date = request.form['event_end_date']
+    ticket_start_date = request.form['ticket_start_date']
+    ticket_end_date = request.form['ticket_end_date']
+    user_id = request.form['user_id']
 
-    data = request.json
-    event_id = data['event_id']
-    event_name = data['event_name']
-    event_desc = data['event_desc']
-    event_loc = data['event_loc']
-    event_start_date = data['event_start_date']
-    event_end_date = data['event_end_date']
-    ticket_start_date = data['ticket_start_date']
-    ticket_end_date = data['ticket_end_date']
-    tickets = data['tickets']
+    if 'file' in request.files:
+        photo = request.files['file']
+    else:
+        photo = None
+
+    filepath = "./static/img/No_image_available.jpg"
+    if photo and photo.filename != '':
+        filepath = os.path.join("./" + app.config['UPLOAD_FOLDER'], str(uuid.uuid4()) + '.jpg')
+        photo.save(filepath)
+
+    error = None
+
+    if not event_name or not event_end_date or not ticket_start_date or not ticket_end_date or not event_loc:
+        error = 'Missing required field.'
+
+    if error:
+        return jsonify({'success': False, 'error': error}), 400
 
     try:
         cursor = db_conn.cursor()
 
+        # Update event details
         query = """
         UPDATE Events
         SET eventName = %s, eventDescription = %s, eventLocation = %s, startDate = %s, 
@@ -172,19 +189,58 @@ def update_event():
         WHERE eventID = %s
         """
         cursor.execute(query, (event_name, event_desc, event_loc, event_start_date, event_end_date,
-                                ticket_start_date, ticket_end_date, event_id))
+                               ticket_start_date, ticket_end_date, event_id))
 
-        for ticket in tickets:
-            ticket_total = ticket['ticket_total']
-            ticket_sold = ticket['ticket_sold']
-            ticket_name = ticket['ticket_name']
-            ticket_price = process_price(ticket['ticket_price'])
+        # Delete old tickets and discounts
+        query = "DELETE FROM Discounts WHERE ticketID IN (SELECT ticketID FROM Tickets WHERE eventID = %s)"
+        cursor.execute(query, (event_id,))
+        query = "DELETE FROM Tickets WHERE eventID = %s"
+        cursor.execute(query, (event_id,))
 
+        # Process each ticket
+        form_data = request.form
+        ticket_keys = [key for key in form_data.keys() if key.startswith('tickets[')]
+        ticket_indices = sorted(set(key.split('[')[1].split(']')[0] for key in ticket_keys))
+        
+        for i in ticket_indices:
+            ticket_total = int(form_data.get(f'tickets[{i}][ticket_total]'))
+            ticket_name = form_data.get(f'tickets[{i}][ticket_name]')
+            ticket_price = float(form_data.get(f'tickets[{i}][ticket_price]'))
+
+            if not ticket_name or ticket_price is None or ticket_total is None:
+                error = 'Missing required field.'
+            elif ticket_total < 0 or ticket_price < 0:
+                error = 'Inappropriate data values.'
+
+            if error:
+                return jsonify({'success': False, 'error': error}), 400
+
+            # Insert ticket into the database
             query = """
-            INSERT INTO Tickets (event_id, ticket_total, ticket_sold, ticket_name, ticket_price) 
+            INSERT INTO Tickets (eventID, ticketType, price, total, sold) 
             VALUES (%s, %s, %s, %s, %s)
             """
-            cursor.execute(query, (event_id, ticket_total, ticket_sold, ticket_name, ticket_price))
+            cursor.execute(query, (event_id, ticket_name, ticket_price, ticket_total, 0))
+            ticket_id = cursor.lastrowid
+
+            # Process each discount for the ticket
+            discount_keys = [key for key in form_data.keys() if key.startswith(f'tickets[{i}][discounts][')]
+            discount_indices = sorted(set(key.split('[')[3].split(']')[0] for key in discount_keys))
+            
+            for j in discount_indices:
+                discount_name = form_data.get(f'tickets[{i}][discounts][{j}][discount_name]')
+                discount_percent = form_data.get(f'tickets[{i}][discounts][{j}][discount_percent]')
+                discount_description = form_data.get(f'tickets[{i}][discounts][{j}][discount_description]')
+                discount_start_date = form_data.get(f'tickets[{i}][discounts][{j}][discount_start_date]')
+                discount_end_date = form_data.get(f'tickets[{i}][discounts][{j}][discount_end_date]')
+
+                if discount_name and discount_percent:
+                    # Insert discount into the database
+                    query = """
+                    INSERT INTO Discounts (ticketID, discountName, discountPercent, discountDescription, discountStartDate, discountEndDate) 
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                    """
+                    cursor.execute(query, (ticket_id, discount_name, discount_percent, discount_description, discount_start_date, discount_end_date))
 
         db_conn.commit()
         return jsonify({'success': True, 'message': 'Event updated successfully', 'eventID': event_id}), 200

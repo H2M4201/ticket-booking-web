@@ -31,24 +31,6 @@ INSERT INTO Users (userName, password, firstName, lastName, email, phoneNumber, 
 INSERT INTO Users (userName, password, firstName, lastName, email, phoneNumber, bankAccount, dateJoined, isGuest, isEnterprise, isAdmin) VALUES
 ('fifa', 'pbkdf2:sha256:150000$G365080U$4a8509d6142e2b6374c75593bfbaf2db5a05cbed41bc3265f1a8e9b9a4fcdc37', 'FIFA', '', 'fifa@gmail.com', '', '', '2024-06-13', FALSE, TRUE, FALSE);
 
-DROP TABLE IF EXISTS Checkout;
-
-CREATE TABLE Checkout (
-    checkoutID INT(11) UNIQUE NOT NULL AUTO_INCREMENT,
-    userID INT(11) NOT NULL,
-    eventID INT(11) NOT NULL,
-    ticketID INT(11) NOT NULL,
-    quantity INT(11) NOT NULL,
-    discountID INT(11),
-    checkoutDate DATETIME NOT NULL,
-    paid BOOLEAN DEFAULT FALSE,
-    PRIMARY KEY (checkoutID),
-    FOREIGN KEY (userID) REFERENCES Users(userID),
-    FOREIGN KEY (eventID) REFERENCES Events(eventID),
-    FOREIGN KEY (ticketID) REFERENCES Tickets(ticketID),
-    FOREIGN KEY (discountID) REFERENCES Discounts(discountID)
-);
-
 DROP TABLE IF EXISTS Events;
 
 CREATE TABLE Events (
@@ -162,16 +144,20 @@ CREATE TABLE Reviews (
     FOREIGN KEY (ticketID) REFERENCES Tickets(ticketID)
 );
 
-CREATE TABLE CHECKOUT (
+DROP TABLE IF EXISTS Checkout;
+
+CREATE TABLE Checkout (
     checkoutID INT(11) UNIQUE NOT NULL AUTO_INCREMENT,
     userID INT(11) NOT NULL,
     eventID INT(11) NOT NULL,
     ticketID INT(11) NOT NULL,
     quantity INT(11) NOT NULL,
     discountID INT(11),
-    checkoutDate DATETIME,
+    checkoutDate DATETIME NOT NULL,
+    paid BOOLEAN DEFAULT FALSE,
     PRIMARY KEY (checkoutID),
     FOREIGN KEY (userID) REFERENCES Users(userID),
     FOREIGN KEY (eventID) REFERENCES Events(eventID),
-    FOREIGN KEY (ticketID) REFERENCES Tickets(ticketID)
+    FOREIGN KEY (ticketID) REFERENCES Tickets(ticketID),
+    FOREIGN KEY (discountID) REFERENCES Discounts(discountID)
 );

@@ -108,7 +108,6 @@ function Home({ user }) {
                 <input
                   type="search"
                   className="form-control"
-                  style={{marginRight: 10+"px"}}
                   value={searchQueryByName}
                   onChange={(e) => setSearchQueryByName(e.target.value)}
                   placeholder="Search events by name"
@@ -127,7 +126,6 @@ function Home({ user }) {
                 <input
                   type="search"
                   className="form-control"
-                  style={{marginRight: 10+"px"}}
                   value={searchQueryByLocation}
                   onChange={(e) => setSearchQueryByLocation(e.target.value)}
                   placeholder="Search events by location"
@@ -154,7 +152,7 @@ function Home({ user }) {
                   </div>
                   {userInfo.isGuest ? (
                     <div className="card-footer bg-transparent">
-                      <button className="btn btn-primary" style={{marginRight: 20+"px"}} onClick={() => navigate(`/event/${event.eventID}`)}>
+                      <button className="btn btn-primary" onClick={() => navigate(`/event/${event.eventID}`)}>
                         MoreInfo
                       </button>
                       <button className="btn btn-primary" onClick={() => handleBuyTicket(event)}>

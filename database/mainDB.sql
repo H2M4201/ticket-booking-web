@@ -17,24 +17,19 @@ CREATE TABLE Users (
 );
 
 INSERT INTO Users (userName, password, firstName, lastName, email, phoneNumber, bankAccount, dateJoined, isGuest, isEnterprise, isAdmin) VALUES
-('mhuyhcmus', 'pbkdf2:sha256:150000$G365080U$4a8509d6142e2b6374c75593bfbaf2db5a05cbed41bc3265f1a8e9b9a4fcdc37', 'Hoang Minh', 'Huy',
- 'huyhoang.hhm@gmail.com', '', '', '2024-06-13', FALSE, TRUE, FALSE);
+('mhuyhcmus', 'pbkdf2:sha256:150000$G365080U$4a8509d6142e2b6374c75593bfbaf2db5a05cbed41bc3265f1a8e9b9a4fcdc37', 'Hoang Minh', 'Huy', 'huyhoang.hhm@gmail.com', '', '', '2024-06-13', FALSE, TRUE, FALSE);
 
 INSERT INTO Users (userName, password, firstName, lastName, email, phoneNumber, bankAccount, dateJoined, isGuest, isEnterprise, isAdmin) VALUES
-('haingo', 'pbkdf2:sha256:150000$G365080U$4a8509d6142e2b6374c75593bfbaf2db5a05cbed41bc3265f1a8e9b9a4fcdc37', 'Ngo', 'Hai',
- 'thanhhai.123@gmail.com', '', '', '2024-06-13', TRUE, FALSE, FALSE);
+('haingo', 'pbkdf2:sha256:150000$G365080U$4a8509d6142e2b6374c75593bfbaf2db5a05cbed41bc3265f1a8e9b9a4fcdc37', 'Ngo', 'Hai', 'thanhhai.123@gmail.com', '', '', '2024-06-13', TRUE, FALSE, FALSE);
 
 INSERT INTO Users (userName, password, firstName, lastName, email, phoneNumber, bankAccount, dateJoined, isGuest, isEnterprise, isAdmin) VALUES
-('danghuy', 'pbkdf2:sha256:150000$G365080U$4a8509d6142e2b6374c75593bfbaf2db5a05cbed41bc3265f1a8e9b9a4fcdc37', 'Do Dang', 'Huy',
- 'danghuy.hhm@gmail.com', '', '', '2024-06-13', TRUE, FALSE, FALSE);
+('danghuy', 'pbkdf2:sha256:150000$G365080U$4a8509d6142e2b6374c75593bfbaf2db5a05cbed41bc3265f1a8e9b9a4fcdc37', 'Do Dang', 'Huy', 'danghuy.hhm@gmail.com', '', '', '2024-06-13', TRUE, FALSE, FALSE);
 
 INSERT INTO Users (userName, password, firstName, lastName, email, phoneNumber, bankAccount, dateJoined, isGuest, isEnterprise, isAdmin) VALUES
-('admin', 'pbkdf2:sha256:150000$G365080U$4a8509d6142e2b6374c75593bfbaf2db5a05cbed41bc3265f1a8e9b9a4fcdc37', 'admin', '',
- 'admin@gmail.com', '', '', '2024-06-13', FALSE, FALSE, TRUE);
+('admin', 'pbkdf2:sha256:150000$G365080U$4a8509d6142e2b6374c75593bfbaf2db5a05cbed41bc3265f1a8e9b9a4fcdc37', 'admin', '', 'admin@gmail.com', '', '', '2024-06-13', FALSE, FALSE, TRUE);
 
 INSERT INTO Users (userName, password, firstName, lastName, email, phoneNumber, bankAccount, dateJoined, isGuest, isEnterprise, isAdmin) VALUES
-('fifa', 'pbkdf2:sha256:150000$G365080U$4a8509d6142e2b6374c75593bfbaf2db5a05cbed41bc3265f1a8e9b9a4fcdc37', 'FIFA', '',
- 'fifa@gmail.com', '', '', '2024-06-13', FALSE, TRUE, FALSE);
+('fifa', 'pbkdf2:sha256:150000$G365080U$4a8509d6142e2b6374c75593bfbaf2db5a05cbed41bc3265f1a8e9b9a4fcdc37', 'FIFA', '', 'fifa@gmail.com', '', '', '2024-06-13', FALSE, TRUE, FALSE);
 
 DROP TABLE IF EXISTS Checkout;
 

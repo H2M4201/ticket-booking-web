@@ -7,11 +7,7 @@ div {
 }
 
 div.card {
-  padding: 10px 30px 15px;
-  background-color: #d5d5bf;
-  border: 2px solid black;
-  border-radius: 20px;
-  box-shadow: 2px 4px 5px 1px #666666;
+  background-color: white;
 }
 
 .card-img-top {
